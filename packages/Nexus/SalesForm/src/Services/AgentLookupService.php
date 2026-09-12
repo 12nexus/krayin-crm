@@ -106,6 +106,28 @@ class AgentLookupService
         ];
     }
 
+    /**
+     * Resolve whatever the rep typed in the State field to its two-letter code,
+     * accepting either the code or the full name. Falls back to the input itself
+     * so an unrecognised region still produces something readable.
+     */
+    public function stateCode(?string $state): string
+    {
+        $state = trim((string) $state);
+
+        if ($state === '') {
+            return '';
+        }
+
+        if (isset($this->states[strtoupper($state)])) {
+            return strtoupper($state);
+        }
+
+        $byName = array_change_key_case(array_flip($this->states), CASE_LOWER);
+
+        return $byName[strtolower($state)] ?? strtoupper($state);
+    }
+
     public function formatPhone(?string $phone): string
     {
         $digits = ViciDialAgent::normalizePhone($phone);

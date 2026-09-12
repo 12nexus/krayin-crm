@@ -47,7 +47,7 @@ class LeadBuilder
         $city = $this->pick($input['city'] ?? null, $verified['city'] ?? null);
         $stateInput = trim((string) ($input['state'] ?? ''));
         $state = $stateInput !== '' ? $stateInput : ($verified['state'] ?? '');
-        $stateCode = $verified['state_code'] ?? $this->abbreviate($state);
+        $stateCode = $verified['state_code'] ?? $this->lookup->stateCode($state);
         $brokerage = $this->pick($input['brokerage'] ?? null, config('sales_form.default_brokerage'));
         $country = $verified['country'] ?? '';
 
@@ -427,10 +427,4 @@ class LeadBuilder
         return $primary !== '' ? $primary : trim((string) $fallback);
     }
 
-    protected function abbreviate(string $state): string
-    {
-        $state = trim($state);
-
-        return strlen($state) <= 3 ? strtoupper($state) : strtoupper(substr($state, 0, 2));
-    }
 }
