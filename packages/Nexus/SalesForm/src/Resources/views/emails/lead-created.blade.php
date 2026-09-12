@@ -23,7 +23,7 @@
 <body style="margin:0;padding:0;background-color:{{ $PAGE }};">
 
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-    {{ $d['client_name'] ?: 'A new lead' }} was added by {{ $d['owner_name'] }}@if($d['has_meeting']), meeting {{ $d['meeting_display'] }} {{ $d['timezone_label'] }}@endif.
+    {{ $d['client_name'] ?: 'A new lead' }} was added by {{ $d['owner_name'] }}{{ $d['has_meeting'] ? ', meeting '.$d['meeting_display'].' '.$d['timezone_label'] : '' }}.
 </div>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:{{ $PAGE }};">
@@ -44,7 +44,7 @@
         {{ $d['client_name'] ?: $d['title'] }}
       </div>
       <div style="font-family:{{ $FONT }};font-size:14px;line-height:22px;color:{{ $T100 }};padding-top:9px;">
-        Logged by {{ $d['owner_name'] }}@if($d['created_at']) on {{ $d['created_at'] }} UTC@endif.
+        Logged by {{ $d['owner_name'] }}{{ $d['created_at'] ? ' on '.$d['created_at'].' UTC' : '' }}.
       </div>
     </td></tr>
 
