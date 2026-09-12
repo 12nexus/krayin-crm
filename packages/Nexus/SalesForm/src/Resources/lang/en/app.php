@@ -15,10 +15,10 @@ return [
 
         'lookup' => [
             'title'          => 'Lead Identification',
-            'hint'           => 'Enter the phone number first — matching agents are pulled from the eXp list automatically.',
+            'hint'           => 'Enter the phone number first. Matching agents are pulled from the eXp list automatically.',
             'phone'          => 'Phone Number',
             'fetch'          => 'Fetch details',
-            'refetch'        => 'Phone number changed — fetch details',
+            'refetch'        => 'Phone number changed, fetch details',
             'searching'      => 'Looking up…',
             'matched'        => 'Matched in the eXp agent list',
             'not-matched'    => 'No match in the eXp agent list',
@@ -65,6 +65,6 @@ return [
 
     'store' => [
         'success' => 'Lead created: :title',
-        'failed'  => 'Could not create the lead. Nothing was saved — please check the details and try again.',
+        'failed'  => 'Could not create the lead. Nothing was saved, so please check the details and try again.',
     ],
 ];
