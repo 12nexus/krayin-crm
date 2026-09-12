@@ -1,6 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ["./src/Resources/**/*.blade.php", "./src/Resources/**/*.js"],
+    content: [
+        "./src/Resources/**/*.blade.php",
+        "./src/Resources/**/*.js",
+
+        // 12NexusBPO packages render into this same admin theme, so their views
+        // have to be scanned or the utilities they use are never compiled.
+        "../../Nexus/*/src/Resources/**/*.blade.php",
+    ],
 
     theme: {
         container: {
