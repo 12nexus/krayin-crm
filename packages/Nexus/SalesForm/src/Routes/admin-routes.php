@@ -10,5 +10,8 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
         Route::get('lookup', 'lookup')->name('admin.sales_form.lookup');
 
         Route::post('', 'store')->name('admin.sales_form.store');
+
+        Route::get('activity/{id}/calendar', 'activityCalendar')
+            ->name('admin.sales_form.activity_calendar');
     });
 });

@@ -29,6 +29,17 @@ class SalesFormServiceProvider extends ServiceProvider
          */
         Event::listen('lead.create.after', [LeadCreated::class, 'handle']);
 
+        /**
+         * Adds "Add to Google Calendar" to the activity dropdown on the lead view.
+         * Uses Krayin's own render hook so the core template is not forked.
+         */
+        Event::listen(
+            'admin.components.activities.content.activity.item.more_actions.dropdown.menu_item.before',
+            function ($viewRenderEventManager) {
+                $viewRenderEventManager->addTemplate('sales_form::activities.calendar-menu-item');
+            }
+        );
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ImportViciDialAgents::class,

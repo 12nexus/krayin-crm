@@ -67,6 +67,11 @@ return [
         'autofilled' => 'auto-filled',
     ],
 
+    'activity' => [
+        'add-to-calendar' => 'Add to Google Calendar',
+        'not-schedulable' => 'That activity has no scheduled time, so there is nothing to add to a calendar.',
+    ],
+
     'store' => [
         'success' => 'Lead created: :title',
         'failed'  => 'Could not create the lead. Nothing was saved, so please check the details and try again.',
