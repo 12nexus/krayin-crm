@@ -34,3 +34,8 @@ node_modules/
 /test-results/
 /blob-report/
 /playwright/.cache/
+
+# 12NexusBPO — confidential data. The ViciDial agent list must never be committed.
+*.csv
+/data/
+/storage/vicidial/
