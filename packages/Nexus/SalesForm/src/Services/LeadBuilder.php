@@ -31,6 +31,10 @@ class LeadBuilder
 
     public function create(array $input, User $submittedBy): \Webkul\Lead\Contracts\Lead
     {
+        // High-water mark so the audit rows this request generates can be told
+        // apart from anything already on the record.
+        $activityHighWaterMark = (int) DB::table('activities')->max('id');
+
         $agent = $this->lookup->lookup($input['phone'] ?? '');
         $matched = $agent['found'];
         $verified = $agent['agent'];
@@ -130,6 +134,8 @@ class LeadBuilder
         ]);
 
         $this->recordActivities($lead->id, $person->id, $input, $verified, $matched, $owner, $meetingLocal, $meetingUtc);
+
+        $this->pruneCreationAuditNoise($lead->id, $person->id, $activityHighWaterMark);
 
         return $lead;
     }
@@ -346,6 +352,40 @@ class LeadBuilder
 
         DB::table('lead_activities')->insert(['lead_id' => $leadId, 'activity_id' => $meeting->id]);
         DB::table('person_activities')->insert(['person_id' => $personId, 'activity_id' => $meeting->id]);
+    }
+
+    /**
+     * Krayin's attribute listener logs an "Updated <field>" system activity for
+     * every field written, so creating one lead buries the intake note under ~20
+     * meaningless rows. Drop the ones this request just produced; "Created" stays.
+     *
+     * Scoped by both the id high-water mark and this lead's own pivot rows, so a
+     * concurrent request's history and any genuine earlier history on a repeat
+     * person are never touched.
+     */
+    protected function pruneCreationAuditNoise(int $leadId, int $personId, int $highWaterMark): void
+    {
+        $ids = DB::table('activities')
+            ->where('id', '>', $highWaterMark)
+            ->where('type', 'system')
+            ->where('title', 'like', 'Updated %')
+            ->where(function ($query) use ($leadId, $personId) {
+                $query->whereIn('id', function ($sub) use ($leadId) {
+                    $sub->select('activity_id')->from('lead_activities')->where('lead_id', $leadId);
+                })->orWhereIn('id', function ($sub) use ($personId) {
+                    $sub->select('activity_id')->from('person_activities')->where('person_id', $personId);
+                });
+            })
+            ->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        DB::table('lead_activities')->whereIn('activity_id', $ids)->delete();
+        DB::table('person_activities')->whereIn('activity_id', $ids)->delete();
+        DB::table('activity_participants')->whereIn('activity_id', $ids)->delete();
+        DB::table('activities')->whereIn('id', $ids)->delete();
     }
 
     protected function meetingLocal(array $input): Carbon
