@@ -16,6 +16,7 @@ class CalendarLink
      * @param  Carbon  $startLocal  Wall-clock start time as the agent experiences it
      * @param  string  $timezone    IANA zone that $startLocal is expressed in
      * @param  array   $guests      Email addresses to invite
+     * @param  ?string $calendarId  Target calendar, so the recipient is not asked to pick one
      */
     public function build(
         string $title,
@@ -24,7 +25,8 @@ class CalendarLink
         int $durationMinutes,
         array $guests = [],
         string $details = '',
-        string $location = ''
+        string $location = '',
+        ?string $calendarId = null
     ): string {
         $end = $startLocal->copy()->addMinutes($durationMinutes);
 
@@ -55,6 +57,18 @@ class CalendarLink
 
         if ($guests) {
             $params['add'] = implode(',', $guests);
+        }
+
+        /**
+         * Opens the composer with this calendar already selected, so the recipient
+         * only has to save. Google ignores `src` and falls back to the primary
+         * calendar if the signed-in account cannot write to it, so a stale or
+         * mistyped id degrades to today's behaviour rather than failing.
+         */
+        $calendarId = $calendarId ?: config('sales_form.notify.calendar_id');
+
+        if ($calendarId) {
+            $params['src'] = $calendarId;
         }
 
         return self::BASE.'?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);

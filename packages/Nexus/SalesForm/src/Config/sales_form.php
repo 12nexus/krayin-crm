@@ -62,6 +62,16 @@ return [
 
         'meeting_minutes'  => 30,
         'meeting_location' => 'Online / phone',
+
+        /**
+         * Google Calendar id the "Add to Google Calendar" button targets, so the
+         * recipient does not have to choose one. Found under Calendar settings ->
+         * the calendar -> Integrate calendar -> Calendar ID. Looks like
+         * c_xxxxxxxx@group.calendar.google.com for a shared calendar.
+         *
+         * Leave empty to let each recipient pick their own calendar.
+         */
+        'calendar_id' => env('SALES_FORM_CALENDAR_ID'),
     ],
 
     'willingness' => [
