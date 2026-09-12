@@ -92,11 +92,20 @@ class SalesFormController extends Controller
             abort(404);
         }
 
+        $leadId = DB::table('lead_activities')->where('activity_id', $id)->value('lead_id');
+
+        /**
+         * `back()` would loop onto this same URL when there is no referer, so send
+         * the user somewhere real instead.
+         */
         if (! $activity->schedule_from) {
-            return back()->with('error', trans('sales_form::app.activity.not-schedulable'));
+            $return = $leadId
+                ? redirect()->route('admin.leads.view', $leadId)
+                : redirect()->route('admin.leads.index');
+
+            return $return->with('error', trans('sales_form::app.activity.not-schedulable'));
         }
 
-        $leadId = DB::table('lead_activities')->where('activity_id', $id)->value('lead_id');
         $lead = $leadId ? app(\Webkul\Lead\Models\Lead::class)->find($leadId) : null;
 
         $digest = $lead ? $this->leadDigest->build($lead) : [];
