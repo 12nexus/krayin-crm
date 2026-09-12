@@ -30,6 +30,10 @@ return [
             'license'        => 'License / specialties',
             'code'           => 'ViciDial code',
             'agents-on-file' => ':count agents on file',
+            'duplicate-one'  => 'This number already has a lead in the CRM',
+            'duplicate-many' => 'This number already has :count leads in the CRM',
+            'duplicate-help' => 'Open the existing lead and update it instead, unless this really is a separate opportunity. Submitting will create another one.',
+            'duplicate-closed' => 'closed',
             'clear'          => 'Clear',
         ],
 

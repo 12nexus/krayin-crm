@@ -167,6 +167,36 @@
                                     @lang('sales_form::app.index.lookup.not-matched-help')
                                 </p>
                             </div>
+
+                            <div
+                                v-if="existingLeads.length"
+                                class="mb-3 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950"
+                            >
+                                <p class="font-semibold text-amber-800 dark:text-amber-300">
+                                    <span v-if="existingLeads.length === 1">@lang('sales_form::app.index.lookup.duplicate-one')</span>
+                                    <span v-else v-text="duplicateHeading"></span>
+                                </p>
+
+                                <ul class="mt-2 grid gap-1">
+                                    <li v-for="lead in existingLeads" :key="lead.id">
+                                        <a
+                                            :href="lead.url"
+                                            target="_blank"
+                                            class="text-sm font-medium text-amber-900 underline dark:text-amber-200"
+                                            v-text="lead.title"
+                                        ></a>
+                                        <span class="text-xs text-amber-700 dark:text-amber-400">
+                                            (<span v-text="lead.stage"></span>,
+                                            <span v-text="lead.owner"></span>,
+                                            <span v-text="lead.created_at"></span>)
+                                        </span>
+                                    </li>
+                                </ul>
+
+                                <p class="mt-2 text-amber-700 dark:text-amber-400">
+                                    @lang('sales_form::app.index.lookup.duplicate-help')
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -391,6 +421,10 @@
 
                         agent: null,
 
+                        // Leads already on file for this number, so a rep is warned
+                        // before opening a second one against the same person.
+                        existingLeads: [],
+
                         submitting: false,
 
                         assistantTypes: ['Remote VA', 'In-house Assistant', 'Other'],
@@ -447,6 +481,11 @@
                             && this.status !== 'loading';
                     },
 
+                    duplicateHeading() {
+                        return "@lang('sales_form::app.index.lookup.duplicate-many')"
+                            .replace(':count', this.existingLeads.length);
+                    },
+
                     location() {
                         if (! this.agent) {
                             return '';
@@ -467,6 +506,7 @@
                             if (this.status === 'found' || this.status === 'notfound') {
                                 this.status = 'incomplete';
                                 this.agent = null;
+                                this.existingLeads = [];
                             }
 
                             return;
@@ -495,6 +535,7 @@
                             })
                             .then(({ data }) => {
                                 this.lookedUpPhone = this.phone;
+                                this.existingLeads = data.existing_leads || [];
 
                                 if (data.found) {
                                     this.agent = data.agent;
@@ -509,6 +550,7 @@
                             .catch(() => {
                                 this.status = 'notfound';
                                 this.agent = null;
+                                this.existingLeads = [];
                                 this.clearAutofilled();
                             });
                     },

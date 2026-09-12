@@ -2,6 +2,7 @@
 
 namespace Nexus\SalesForm\Services;
 
+use Illuminate\Support\Facades\DB;
 use Nexus\SalesForm\Models\ViciDialAgent;
 
 class AgentLookupService
@@ -62,19 +63,23 @@ class AgentLookupService
                 ->first();
         }
 
+        $existing = $this->existingLeads($normalized);
+
         if (! $agent) {
             return [
-                'found'  => false,
-                'phone'  => $normalized,
-                'reason' => 'not_found',
-                'agent'  => null,
+                'found'          => false,
+                'phone'          => $normalized,
+                'reason'         => 'not_found',
+                'agent'          => null,
+                'existing_leads' => $existing,
             ];
         }
 
         return [
-            'found' => true,
-            'phone' => $normalized,
-            'agent' => $this->present($agent),
+            'found'          => true,
+            'phone'          => $normalized,
+            'agent'          => $this->present($agent),
+            'existing_leads' => $existing,
         ];
     }
 
@@ -104,6 +109,57 @@ class AgentLookupService
             'vendor_lead_code' => $agent->vendor_lead_code,
             'brokerage'        => config('sales_form.default_brokerage'),
         ];
+    }
+
+    /**
+     * Leads already on file for this number, so the rep is told before they open
+     * a second one against someone who is already in the pipeline.
+     *
+     * Contact numbers are stored as JSON like [{"value":"+13058151136",...}], so
+     * matching the normalised digits as a substring is enough to find the person.
+     */
+    public function existingLeads(?string $phone): array
+    {
+        $normalized = ViciDialAgent::normalizePhone($phone);
+
+        if (strlen($normalized) < 10) {
+            return [];
+        }
+
+        $personIds = DB::table('persons')
+            ->where('contact_numbers', 'like', '%'.$normalized.'%')
+            ->pluck('id');
+
+        if ($personIds->isEmpty()) {
+            return [];
+        }
+
+        $base = rtrim((string) config('app.url'), '/').'/'.config('app.admin_path').'/leads/view/';
+
+        return DB::table('leads')
+            ->leftJoin('users', 'users.id', '=', 'leads.user_id')
+            ->leftJoin('lead_pipeline_stages as stages', 'stages.id', '=', 'leads.lead_pipeline_stage_id')
+            ->whereIn('leads.person_id', $personIds)
+            ->orderByDesc('leads.id')
+            ->limit(5)
+            ->get([
+                'leads.id',
+                'leads.title',
+                'leads.created_at',
+                'users.name as owner',
+                'stages.name as stage',
+                'stages.code as stage_code',
+            ])
+            ->map(fn ($lead) => [
+                'id'         => $lead->id,
+                'title'      => $lead->title,
+                'owner'      => $lead->owner ?: 'Unassigned',
+                'stage'      => $lead->stage ?: '',
+                'is_closed'  => in_array($lead->stage_code, ['won', 'lost'], true),
+                'created_at' => $lead->created_at ? substr((string) $lead->created_at, 0, 10) : '',
+                'url'        => $base.$lead->id,
+            ])
+            ->all();
     }
 
     /**
