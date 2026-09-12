@@ -47,6 +47,23 @@ return [
         'PST (Pacific Standard Time)' => 'America/Los_Angeles',
     ],
 
+    /**
+     * Notify administrators whenever a lead is created, wherever it came from.
+     */
+    'notify' => [
+        'enabled' => env('SALES_FORM_NOTIFY', true),
+
+        /**
+         * Used when the administrator lookup returns nothing or fails outright,
+         * so a lead is never created silently.
+         */
+        'fallback_email' => env('SALES_FORM_NOTIFY_FALLBACK', 'shehzer@12nexusbpo.com'),
+        'fallback_name'  => 'Sayyed Shehzer Abbas',
+
+        'meeting_minutes'  => 30,
+        'meeting_location' => 'Online / phone',
+    ],
+
     'willingness' => [
         1 => '1 - Low',
         2 => '2 - Medium',

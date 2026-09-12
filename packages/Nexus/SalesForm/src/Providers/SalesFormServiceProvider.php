@@ -3,8 +3,10 @@
 namespace Nexus\SalesForm\Providers;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Nexus\SalesForm\Console\Commands\ImportViciDialAgents;
+use Nexus\SalesForm\Listeners\LeadCreated;
 
 class SalesFormServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,12 @@ class SalesFormServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'sales_form');
 
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'sales_form');
+
+        /**
+         * Fires for every lead, whichever screen created it: the sales form,
+         * Krayin's own create page, and the public web forms all dispatch this.
+         */
+        Event::listen('lead.create.after', [LeadCreated::class, 'handle']);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
