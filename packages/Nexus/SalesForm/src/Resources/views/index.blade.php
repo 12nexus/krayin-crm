@@ -135,7 +135,7 @@
 
                                     <div class="flex gap-2">
                                         <dt class="font-medium">@lang('sales_form::app.index.lookup.verified-email'):</dt>
-                                        <dd v-text="agent.email || '—'"></dd>
+                                        <dd v-text="agent.email || 'Not on file'"></dd>
                                     </div>
 
                                     <div class="flex gap-2">
@@ -145,12 +145,12 @@
 
                                     <div class="flex gap-2">
                                         <dt class="font-medium">@lang('sales_form::app.index.lookup.code'):</dt>
-                                        <dd class="truncate" v-text="agent.vendor_lead_code || '—'"></dd>
+                                        <dd class="truncate" v-text="agent.vendor_lead_code || 'Not on file'"></dd>
                                     </div>
 
                                     <div class="flex gap-2 sm:col-span-2">
                                         <dt class="shrink-0 font-medium">@lang('sales_form::app.index.lookup.license'):</dt>
-                                        <dd v-text="agent.license_details || '—'"></dd>
+                                        <dd v-text="agent.license_details || 'Not on file'"></dd>
                                     </div>
                                 </dl>
                             </div>
