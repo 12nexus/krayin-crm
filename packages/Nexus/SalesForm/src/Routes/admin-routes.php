@@ -23,12 +23,13 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
     });
 
     /**
-     * Quick "Create Lead" form, reached from the New Lead column only. Gated by
-     * Krayin's own leads.create permission (see Config/acl.php).
+     * Quick "Create Lead" form, reached from the New Lead column only. Named
+     * under admin.leads.* so Krayin's route check authorises it through the
+     * Leads feature; the controller also requires leads.create.
      */
     Route::controller(SalesFormController::class)->prefix('leads/new-lead')->group(function () {
-        Route::get('', 'createNewLead')->name('admin.sales_form.new_lead');
+        Route::get('', 'createNewLead')->name('admin.leads.new_lead');
 
-        Route::post('', 'storeNewLead')->name('admin.sales_form.new_lead.store');
+        Route::post('', 'storeNewLead')->name('admin.leads.new_lead.store');
     });
 });

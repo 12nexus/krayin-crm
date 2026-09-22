@@ -14,7 +14,7 @@
         >
             <form
                 method="POST"
-                action="{{ route('admin.sales_form.new_lead.store') }}"
+                action="{{ route('admin.leads.new_lead.store') }}"
                 @submit="submitting = true"
             >
                 @csrf

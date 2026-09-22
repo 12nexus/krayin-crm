@@ -47,7 +47,7 @@
                                 @if (bouncer()->hasPermission('leads.create'))
                                     <a
                                         v-if="stage.code === 'new'"
-                                        href="{{ route('admin.sales_form.new_lead') }}"
+                                        href="{{ route('admin.leads.new_lead') }}"
                                         class="icon-add cursor-pointer rounded p-1 text-lg text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white"
                                         title="@lang('admin::app.leads.index.kanban.create-lead-btn')"
                                     >
@@ -112,7 +112,7 @@
                                         @if (bouncer()->hasPermission('leads.create'))
                                             <a
                                                 v-if="stage.code === 'new'"
-                                                href="{{ route('admin.sales_form.new_lead') }}"
+                                                href="{{ route('admin.leads.new_lead') }}"
                                                 class="secondary-button"
                                             >
                                                 @lang('admin::app.leads.index.kanban.create-lead-btn')

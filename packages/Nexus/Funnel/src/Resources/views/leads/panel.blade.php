@@ -64,7 +64,7 @@
     @if ($canEdit)
         <div class="flex flex-wrap gap-2 pt-1">
             @if ($archived)
-                <form method="POST" action="{{ route('admin.funnel.restore', $lead->id) }}">
+                <form method="POST" action="{{ route('admin.leads.funnel.restore', $lead->id) }}">
                     @csrf
                     <button type="submit" class="secondary-button">@lang('funnel::app.panel.restore')</button>
                 </form>
@@ -78,18 +78,18 @@
 
             @if ($stage === 'meeting-scheduled' && ! $archived)
                 @unless ($isValid)
-                    <form method="POST" action="{{ route('admin.funnel.valid', $lead->id) }}">
+                    <form method="POST" action="{{ route('admin.leads.funnel.valid', $lead->id) }}">
                         @csrf
                         <button type="submit" class="secondary-button !border-green-600 !text-green-700">✓ @lang('funnel::app.panel.mark-valid')</button>
                     </form>
                 @endunless
 
-                <form method="POST" action="{{ route('admin.funnel.held', $lead->id) }}">
+                <form method="POST" action="{{ route('admin.leads.funnel.held', $lead->id) }}">
                     @csrf
                     <button type="submit" class="secondary-button">@lang('funnel::app.panel.held')</button>
                 </form>
 
-                <form method="POST" action="{{ route('admin.funnel.no_show', $lead->id) }}">
+                <form method="POST" action="{{ route('admin.leads.funnel.no_show', $lead->id) }}">
                     @csrf
                     <button type="submit" class="secondary-button">@lang('funnel::app.panel.no-show')</button>
                 </form>
@@ -171,7 +171,7 @@
                 <form
                     id="funnel-invalid-form"
                     method="POST"
-                    action="{{ route('admin.funnel.invalid', $lead->id) }}"
+                    action="{{ route('admin.leads.funnel.invalid', $lead->id) }}"
                     class="flex flex-col gap-3"
                 >
                     @csrf
@@ -236,7 +236,7 @@
                     this.submitting = true;
                     this.meetingError = null;
 
-                    this.$axios.post("{{ route('admin.funnel.meeting', $lead->id) }}", this.form)
+                    this.$axios.post("{{ route('admin.leads.funnel.meeting', $lead->id) }}", this.form)
                         .then(({ data }) => {
                             window.location.href = data.redirect;
                         })
