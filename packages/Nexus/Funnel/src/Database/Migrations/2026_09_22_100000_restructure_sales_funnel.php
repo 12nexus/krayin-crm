@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
  * - Raises estimated values below the $600 monthly retainer to the retainer.
  *
  * Idempotent: every step checks before it writes, so a re-run changes nothing.
+ * Note that `lead_pipeline_stages` has no timestamp columns.
  */
 return new class extends Migration
 {
@@ -76,8 +77,6 @@ return new class extends Migration
                     'sort_order'       => $sortOrder,
                     'probability'      => $probability,
                     'lead_pipeline_id' => $pipelineId,
-                    'created_at'       => $now,
-                    'updated_at'       => $now,
                 ]);
             }
         }
@@ -110,7 +109,7 @@ return new class extends Migration
             DB::table('lead_pipeline_stages')
                 ->where('lead_pipeline_id', $pipelineId)
                 ->where('code', $code)
-                ->update(['sort_order' => $sortOrder, 'updated_at' => $now]);
+                ->update(['sort_order' => $sortOrder]);
         }
     }
 
@@ -181,8 +180,6 @@ return new class extends Migration
             'sort_order'       => 1,
             'probability'      => 0,
             'lead_pipeline_id' => $archiveId,
-            'created_at'       => $now,
-            'updated_at'       => $now,
         ]);
     }
 
