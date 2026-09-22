@@ -64,12 +64,18 @@
 
                         @foreach ($lead->person->emails as $email)
                             <div class="flex gap-1">
-                                <a
-                                    class="text-brandColor"
-                                    href="mailto:{{ $email['value'] }}"
+                                {{-- 12Nexus: the CRM sends no mail, so a click copies the address. --}}
+                                <span
+                                    class="inline-flex items-center gap-1 text-brandColor"
+                                    role="button"
+                                    tabindex="0"
+                                    title="@lang('funnel::app.copy.hint')"
+                                    data-nexus-copy="{{ $email['value'] }}"
                                 >
                                     {{ $email['value'] }}
-                                </a>
+
+                                    <svg class="nexus-copy-icon h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </span>
 
                                 <span class="text-gray-500 dark:text-gray-300">
                                     ({{ $email['label'] }})
@@ -83,12 +89,18 @@
 
                         @foreach ($lead->person->contact_numbers as $contactNumber)
                             <div class="flex gap-1">
-                                <a
-                                    class="text-brandColor"
-                                    href="callto:{{ $contactNumber['value'] }}"
+                                {{-- 12Nexus: calls happen on the dialer, so a click copies the number. --}}
+                                <span
+                                    class="inline-flex items-center gap-1 text-brandColor"
+                                    role="button"
+                                    tabindex="0"
+                                    title="@lang('funnel::app.copy.hint')"
+                                    data-nexus-copy="{{ $contactNumber['value'] }}"
                                 >
                                     {{ $contactNumber['value'] }}
-                                </a>
+
+                                    <svg class="nexus-copy-icon h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </span>
 
                                 <span class="text-gray-500 dark:text-gray-300">
                                     ({{ $contactNumber['label'] }})

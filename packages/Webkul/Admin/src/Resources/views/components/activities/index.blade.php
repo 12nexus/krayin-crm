@@ -272,7 +272,7 @@
                                                             </div>
                                                         </x-admin::dropdown.menu.item>
 
-                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'lunch'].includes(activity.type)">
+                                                        <x-admin::dropdown.menu.item v-if="['call', 'lunch'].includes(activity.type)">
                                                             <a
                                                                 class="flex items-center gap-2"
                                                                 :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"

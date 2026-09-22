@@ -43,11 +43,13 @@
                                     @{{ stage.name }} (@{{ stage.leads.meta.total }})
                                 </span>
 
+                                {{-- 12Nexus: leads are only created into New Lead, with the Create Lead form. --}}
                                 @if (bouncer()->hasPermission('leads.create'))
                                     <a
-                                        :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
+                                        v-if="stage.code === 'new'"
+                                        href="{{ route('admin.sales_form.new_lead') }}"
                                         class="icon-add cursor-pointer rounded p-1 text-lg text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white"
-                                        target="_blank"
+                                        title="@lang('admin::app.leads.index.kanban.create-lead-btn')"
                                     >
                                     </a>
                                 @endif
@@ -109,7 +111,8 @@
 
                                         @if (bouncer()->hasPermission('leads.create'))
                                             <a
-                                                :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
+                                                v-if="stage.code === 'new'"
+                                                href="{{ route('admin.sales_form.new_lead') }}"
                                                 class="secondary-button"
                                             >
                                                 @lang('admin::app.leads.index.kanban.create-lead-btn')
@@ -168,9 +171,22 @@
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
-                                    <!-- Lead Title -->
-                                    <p class="text-xs font-medium">
-                                        @{{ element.title }}
+                                    <!-- Most recent meeting, in the agent's own timezone (12Nexus) -->
+                                    <p
+                                        class="flex items-center gap-1 text-xs font-medium"
+                                        :class="{ 'opacity-60': element.extra?.meeting?.done }"
+                                        v-if="element.extra?.meeting"
+                                    >
+                                        <span class="icon-calendar text-base"></span>
+
+                                        @{{ element.extra.meeting.label }}
+                                    </p>
+
+                                    <p
+                                        class="text-xs text-gray-500"
+                                        v-else
+                                    >
+                                        @lang('admin::app.leads.index.kanban.no-meeting')
                                     </p>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
@@ -185,11 +201,19 @@
                                             @{{ element.user.name }}
                                         </div>
 
+                                        <!-- Part-time / Full-time in place of the price (12Nexus) -->
                                         <div
-                                            class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white"
-                                            v-if="cardFields.leadValue"
+                                            class="rounded-xl bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-gray-800 dark:text-white"
+                                            v-if="element.extra?.engagement"
                                         >
-                                            @{{ element.formatted_lead_value }}
+                                            @{{ element.extra.engagement }}
+                                        </div>
+
+                                        <div
+                                            class="rounded-xl bg-green-100 px-2 py-1 text-xs font-medium text-green-800"
+                                            v-if="element.extra?.validity === 'Valid'"
+                                        >
+                                            ✓ @lang('admin::app.leads.index.kanban.valid')
                                         </div>
 
                                         <div

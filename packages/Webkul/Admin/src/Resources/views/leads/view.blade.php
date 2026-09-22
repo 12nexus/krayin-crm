@@ -105,7 +105,7 @@
             <!-- Stages Navigation -->
             @include ('admin::leads.view.stages')
 
-            <!-- Activities -->
+            <!-- Activities (12Nexus: no Quotes tab; Quotes are replaced by Onboarded Clients) -->
             {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
 
             <x-admin::activities
@@ -115,17 +115,11 @@
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
-                    ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                 ]"
             >
                 <!-- Products -->
                 <x-slot:products>
                     @include ('admin::leads.view.products')
-                </x-slot>
-
-                <!-- Quotes -->
-                <x-slot:quotes>
-                    @include ('admin::leads.view.quotes')
                 </x-slot>
 
                 <!-- Description -->

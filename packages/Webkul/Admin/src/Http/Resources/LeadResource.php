@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
 
 class LeadResource extends JsonResource
 {
@@ -33,6 +34,25 @@ class LeadResource extends JsonResource
             'pipeline' => $this->pipeline ? new PipelineResource($this->pipeline) : null,
             'stage' => $this->stage ? new StageResource($this->stage) : null,
             'tags' => TagResource::collection($this->tags),
+            'extra' => $this->extra(),
         ];
+    }
+
+    /**
+     * Extra card data contributed by packages through the
+     * `admin.leads.resource.extra` event: each listener returns an array, and
+     * the arrays are merged.
+     */
+    protected function extra(): array
+    {
+        $extra = [];
+
+        foreach (Event::dispatch('admin.leads.resource.extra', [$this->resource]) as $response) {
+            if (is_array($response)) {
+                $extra = array_merge($extra, $response);
+            }
+        }
+
+        return $extra;
     }
 }

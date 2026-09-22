@@ -239,9 +239,7 @@
                             label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
                             value: 'call'
                         }, {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.meeting') }}",
-                            value: 'meeting'
-                        }, {
+                            {{-- 12Nexus: meetings are booked from the lead's funnel panel, which takes the client's timezone and checks for clashes. --}}
                             label: "{{ trans('admin::app.components.activities.actions.activity.lunch') }}",
                             value: 'lunch'
                         },

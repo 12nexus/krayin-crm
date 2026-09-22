@@ -63,6 +63,8 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Nexus\\SalesForm\\": "packages/Nexus/SalesForm/src",
+            "Nexus\\Funnel\\": "packages/Nexus/Funnel/src",
+            "Nexus\\Clients\\": "packages/Nexus/Clients/src",
             "Webkul\\Activity\\": "packages/Webkul/Activity/src",
             "Webkul\\Admin\\": "packages/Webkul/Admin/src",
             "Webkul\\Attribute\\": "packages/Webkul/Attribute/src",

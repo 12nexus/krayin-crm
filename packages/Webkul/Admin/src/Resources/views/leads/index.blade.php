@@ -33,17 +33,7 @@
                 <x-admin::datagrid.export :src="route('admin.leads.index')" />
             @endif
 
-            <!-- Create button for Leads -->
-            <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('leads.create'))
-                    <a
-                        href="{{ route('admin.leads.create', request()->query()) }}"
-                        class="primary-button"
-                    >
-                        @lang('admin::app.leads.index.create-btn')
-                    </a>
-                @endif
-            </div>
+            {{-- 12Nexus: leads are created from the New Lead column only (Create Lead form). --}}
         </div>
 
         {!! view_render_event('admin.leads.index.header.right.after') !!}

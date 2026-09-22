@@ -1874,6 +1874,8 @@ return [
                 'empty-list' => 'Your Leads List is Empty',
                 'empty-list-description' => 'Create a lead to organize your goals.',
                 'create-lead-btn' => 'Create Lead',
+                'no-meeting' => 'No meeting scheduled',
+                'valid' => 'Valid',
                 'columns' => [
                     'contact-person' => 'Contact Person',
                     'id' => 'ID',

@@ -24,6 +24,8 @@ use Webkul\Tag\Providers\TagServiceProvider;
 use Webkul\User\Providers\UserServiceProvider;
 use Webkul\Warehouse\Providers\WarehouseServiceProvider;
 use Webkul\WebForm\Providers\WebFormServiceProvider;
+use Nexus\Clients\Providers\ClientsServiceProvider;
+use Nexus\Funnel\Providers\FunnelServiceProvider;
 use Nexus\SalesForm\Providers\SalesFormServiceProvider;
 
 return [
@@ -67,4 +69,6 @@ return [
      * 12NexusBPO Service Providers...
      */
     SalesFormServiceProvider::class,
+    FunnelServiceProvider::class,
+    ClientsServiceProvider::class,
 ];
