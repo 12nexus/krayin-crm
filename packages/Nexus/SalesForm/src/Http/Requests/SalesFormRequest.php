@@ -12,6 +12,13 @@ class SalesFormRequest extends FormRequest
         return bouncer()->hasPermission('sales_form');
     }
 
+    public function messages(): array
+    {
+        return [
+            'lead_value.min' => 'The estimated monthly value cannot be below the $:min retainer.',
+        ];
+    }
+
     public function rules(): array
     {
         return [
@@ -30,6 +37,8 @@ class SalesFormRequest extends FormRequest
             'meeting_time'           => ['required', 'date_format:H:i'],
             'timezone'               => ['required', Rule::in(array_keys(config('sales_form.timezones')))],
             'additional_information' => ['nullable', 'string', 'max:5000'],
+            'engagement_type'        => ['nullable', Rule::in(config('sales_form.engagement_types'))],
+            'lead_value'             => ['nullable', 'numeric', 'min:'.config('sales_form.minimum_lead_value'), 'max:1000000'],
         ];
     }
 
@@ -44,6 +53,8 @@ class SalesFormRequest extends FormRequest
             'meeting_date'           => 'Meeting Date',
             'meeting_time'           => 'Time',
             'additional_information' => 'Additional Information',
+            'engagement_type'        => 'Part-time / Full-time',
+            'lead_value'             => 'Estimated monthly value',
         ];
     }
 
@@ -54,15 +65,11 @@ class SalesFormRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $digits = preg_replace('/\D+/', '', (string) $this->input('phone'));
-
-            if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
-                $digits = substr($digits, 1);
-            }
-
-            if (strlen($digits) !== 10) {
+            if (! PhoneRule::isValid($this->input('phone'))) {
                 $validator->errors()->add('phone', 'Enter a valid 10-digit phone number.');
             }
+
+            MeetingSlotRule::check($this, $validator);
         });
     }
 }

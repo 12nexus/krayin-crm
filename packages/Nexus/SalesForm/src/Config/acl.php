@@ -9,6 +9,8 @@ return [
             'admin.sales_form.lookup',
             'admin.sales_form.store',
             'admin.sales_form.activity_calendar',
+            'admin.sales_form.schedule',
+            'admin.sales_form.schedule.store',
         ],
         'sort' => 2,
     ],

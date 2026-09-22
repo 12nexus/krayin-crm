@@ -19,11 +19,15 @@
 @endphp
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>New lead</title></head>
+<title>{{ $kind === 'meeting' ? 'Meeting scheduled' : 'New lead' }}</title></head>
 <body style="margin:0;padding:0;background-color:{{ $PAGE }};">
 
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-    {{ $d['client_name'] ?: 'A new lead' }} was added by {{ $d['owner_name'] }}{{ $d['has_meeting'] ? ', meeting '.$d['meeting_display'].' '.$d['timezone_label'] : '' }}.
+    @if ($kind === 'meeting')
+        {{ $d['client_name'] ?: 'A lead' }} has a meeting booked{{ $d['has_meeting'] ? ' for '.$d['meeting_display'].' '.$d['timezone_label'] : '' }} ({{ $d['owner_name'] }}).
+    @else
+        {{ $d['client_name'] ?: 'A new lead' }} was added by {{ $d['owner_name'] }}{{ $d['has_meeting'] ? ', meeting '.$d['meeting_display'].' '.$d['timezone_label'] : '' }}.
+    @endif
 </div>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:{{ $PAGE }};">
@@ -38,13 +42,17 @@
 
     <tr><td bgcolor="{{ $NAVY }}" style="padding:26px 32px;background-color:{{ $NAVY }};">
       <div style="font-family:{{ $FONT }};font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:{{ $T300 }};padding-bottom:8px;">
-        New lead created
+        {{ $kind === 'meeting' ? 'Meeting scheduled' : 'New lead created' }}
       </div>
       <div style="font-family:{{ $FONT }};font-size:23px;line-height:31px;font-weight:700;color:#ffffff;">
         {{ $d['client_name'] ?: $d['title'] }}
       </div>
       <div style="font-family:{{ $FONT }};font-size:14px;line-height:22px;color:{{ $T100 }};padding-top:9px;">
-        Logged by {{ $d['owner_name'] }}{{ $d['created_at'] ? ' on '.$d['created_at'].' UTC' : '' }}.
+        @if ($kind === 'meeting')
+          Booked by {{ $bookedBy ?: $d['owner_name'] }} on {{ now()->format('Y-m-d H:i') }} UTC. Lead owner: {{ $d['owner_name'] }}.
+        @else
+          Logged by {{ $d['owner_name'] }}{{ $d['created_at'] ? ' on '.$d['created_at'].' UTC' : '' }}.
+        @endif
       </div>
     </td></tr>
 
@@ -54,7 +62,7 @@
                style="background-color:{{ $T50 }};border:1px solid {{ $T100 }};border-radius:10px;">
           <tr><td style="padding:18px 22px;font-family:{{ $FONT }};">
             <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:{{ $NAVY }};padding-bottom:8px;">
-              Discovery meeting
+              {{ $kind === 'meeting' ? 'Meeting' : 'Discovery meeting' }}
             </div>
             <div style="font-size:17px;font-weight:700;color:{{ $INK }};line-height:25px;">
               {{ $d['meeting_display'] }}

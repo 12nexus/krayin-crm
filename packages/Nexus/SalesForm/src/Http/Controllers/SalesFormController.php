@@ -9,11 +9,17 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Nexus\SalesForm\Http\Requests\NewLeadRequest;
 use Nexus\SalesForm\Http\Requests\SalesFormRequest;
+use Nexus\SalesForm\Listeners\LeadCreated;
 use Nexus\SalesForm\Services\AgentLookupService;
 use Nexus\SalesForm\Services\CalendarLink;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\LeadDigest;
+use Nexus\SalesForm\Services\LeadFields;
+use Nexus\SalesForm\Services\MeetingSlots;
+use Nexus\SalesForm\Support\LeadAccess;
 use Webkul\User\Repositories\UserRepository;
 
 class SalesFormController extends Controller
@@ -24,6 +30,7 @@ class SalesFormController extends Controller
         protected UserRepository $userRepository,
         protected LeadDigest $leadDigest,
         protected CalendarLink $calendar,
+        protected MeetingSlots $slots,
     ) {}
 
     /**
@@ -31,15 +38,133 @@ class SalesFormController extends Controller
      */
     public function index()
     {
+        return view('sales_form::index', $this->formData());
+    }
+
+    /**
+     * The sales form filled in against a lead that already exists, typically one
+     * waiting in New Lead that has now agreed to a meeting.
+     */
+    public function schedule(int $id)
+    {
+        abort_unless(bouncer()->hasPermission('leads.edit'), 401);
+
+        $lead = LeadAccess::findOrFail($id);
+
+        $fields = app(LeadFields::class)->get($lead->id);
+        $person = $lead->person;
+
+        $willingness = array_search($fields['willingness_to_hire'] ?? null, config('sales_form.willingness'), true);
+
+        return view('sales_form::index', array_merge($this->formData(), [
+            'lead'    => $lead,
+            'prefill' => [
+                'phone'            => collect($person?->contact_numbers ?? [])->pluck('value')->filter()->first() ?? '',
+                'user_id'          => $lead->user_id,
+                'lead_name'        => $person?->name ?? '',
+                'email'            => collect($person?->emails ?? [])->pluck('value')->filter()->first() ?? '',
+                'brokerage'        => $fields['brokerage'] ?? '',
+                'experience_years' => $fields['experience_years'] ?? '',
+                'city'             => $fields['agent_city'] ?? '',
+                'state'            => $fields['agent_state'] ?? '',
+                'using_assistant'  => $fields['using_assistant'] ?? 'No',
+                'assistant_type'   => ($fields['assistant_type'] ?? 'None') === 'None' ? '' : $fields['assistant_type'],
+                'willingness'      => $willingness ?: 2,
+                'engagement_type'  => $fields['engagement_type'] ?? '',
+                'lead_value'       => (float) $lead->lead_value,
+                'additional_information' => '',
+            ],
+        ]));
+    }
+
+    public function storeSchedule(SalesFormRequest $request, int $id): RedirectResponse
+    {
+        abort_unless(bouncer()->hasPermission('leads.edit'), 401);
+
+        $lead = LeadAccess::findOrFail($id);
+
         $user = auth()->guard('user')->user();
 
-        return view('sales_form::index', [
-            'currentUser'  => $user,
-            'canReassign'  => bouncer()->hasPermission('settings.user.users'),
-            'salesUsers'   => $this->userRepository->all(['id', 'name', 'email']),
-            'timezones'    => array_keys(config('sales_form.timezones')),
-            'agentsOnFile' => DB::table('vicidial_agents')->count(),
-        ]);
+        try {
+            $lead = $this->slots->locked(fn () => DB::transaction(
+                fn () => $this->leadBuilder->scheduleForLead($lead, $request->validated(), $user)
+            ));
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Scheduling a meeting on an existing lead failed', [
+                'user_id' => $user->id,
+                'lead_id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', trans('sales_form::app.schedule.failed'));
+        }
+
+        app(LeadCreated::class)->handle($lead, 'meeting');
+
+        session()->flash('success', trans('sales_form::app.schedule.success'));
+
+        return redirect()->route('admin.leads.view', $lead->id);
+    }
+
+    /**
+     * Quick "Create Lead" form: an interested client with no meeting booked yet.
+     */
+    public function createNewLead()
+    {
+        abort_unless(bouncer()->hasPermission('leads.create'), 401);
+
+        return view('sales_form::new-lead', $this->formData());
+    }
+
+    public function storeNewLead(NewLeadRequest $request): RedirectResponse
+    {
+        $user = auth()->guard('user')->user();
+
+        try {
+            $lead = DB::transaction(
+                fn () => $this->leadBuilder->createNewLead($request->validated(), $user)
+            );
+        } catch (\Throwable $e) {
+            Log::error('Create Lead form failed', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', trans('sales_form::app.store.failed'));
+        }
+
+        Event::dispatch('lead.create.after', $lead);
+
+        session()->flash('success', trans('sales_form::app.store.success', ['title' => $lead->title]));
+
+        return redirect()->route('admin.leads.index');
+    }
+
+    /**
+     * What both forms need: who is filling it in, who they may assign it to, and
+     * the choices on offer.
+     */
+    protected function formData(): array
+    {
+        $user = auth()->guard('user')->user();
+
+        return [
+            'currentUser'     => $user,
+            'canReassign'     => $this->leadBuilder->canReassign(),
+            'salesUsers'      => $this->userRepository->findWhere(['status' => 1], ['id', 'name', 'email']),
+            'timezones'       => array_keys(config('sales_form.timezones')),
+            'engagementTypes' => config('sales_form.engagement_types'),
+            'minimumValue'    => (float) config('sales_form.minimum_lead_value'),
+            'agentsOnFile'    => DB::table('vicidial_agents')->count(),
+            'lead'            => null,
+            'prefill'         => [],
+        ];
     }
 
     /**
@@ -58,9 +183,11 @@ class SalesFormController extends Controller
         $user = auth()->guard('user')->user();
 
         try {
-            $lead = DB::transaction(
+            $lead = $this->slots->locked(fn () => DB::transaction(
                 fn () => $this->leadBuilder->create($request->validated(), $user)
-            );
+            ));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Sales form lead creation failed', [
                 'user_id' => $user->id,

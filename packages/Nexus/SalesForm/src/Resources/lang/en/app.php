@@ -52,6 +52,9 @@ return [
             'city'             => 'City',
             'state'            => 'State',
             'email'            => 'Email Address',
+            'engagement'       => 'Part-time / Full-time',
+            'lead-value'       => 'Estimated monthly value (USD)',
+            'lead-value-help'  => 'Defaults to the $:min monthly retainer, which is also the minimum. Raise it to suit the deal.',
         ],
 
         'meeting' => [
@@ -65,6 +68,29 @@ return [
 
         'submit'    => 'Create Lead',
         'autofilled' => 'auto-filled',
+    ],
+
+    'new-lead' => [
+        'title'            => 'Create Lead',
+        'description'      => 'The client sounded interested but no meeting is booked yet. The lead goes to New Lead, assigned to its sales owner.',
+        'meeting-hint'     => 'Booked a meeting on the call? Use the',
+        'meeting-link'     => 'Sales Form instead.',
+        'owner'            => 'Sales Owner',
+        'name'             => 'Name',
+        'note'             => 'Additional Note',
+        'note-placeholder' => 'What the client said, when to call back, anything the next call should know.',
+        'optional'         => 'More details (optional)',
+        'optional-hint'    => 'Filled in from the agent list when the number matches. Leave blank if unknown.',
+        'submit'           => 'Create Lead',
+        'cancel'           => 'Cancel',
+    ],
+
+    'schedule' => [
+        'title'       => 'Schedule meeting: :name',
+        'description' => 'Complete the sales form for this lead. It moves to Meeting Scheduled with the meeting below.',
+        'submit'      => 'Schedule Meeting',
+        'success'     => 'Meeting scheduled.',
+        'failed'      => 'Could not schedule the meeting. Nothing was saved, so please check the details and try again.',
     ],
 
     'activity' => [

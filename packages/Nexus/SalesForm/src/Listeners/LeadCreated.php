@@ -23,9 +23,15 @@ class LeadCreated
      *
      * Never throws: a notification problem must not surface as a failed lead
      * submission for the rep who just filled the form in.
+     *
+     * @param  string  $kind  created | meeting (a meeting booked on an existing lead)
      */
-    public function handle($lead): void
+    public function handle($lead, $kind = 'created'): void
     {
+        // Krayin's event dispatcher may pass extra payload; only the two known
+        // kinds are meaningful.
+        $kind = $kind === 'meeting' ? 'meeting' : 'created';
+
         if (! config('sales_form.notify.enabled')) {
             return;
         }
@@ -44,6 +50,8 @@ class LeadCreated
                     $admin['name'],
                     $digest,
                     $calendarUrl,
+                    $kind,
+                    auth()->guard('user')->user()?->name,
                 ));
             }
 

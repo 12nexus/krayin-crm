@@ -27,6 +27,8 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
         public string $recipientName,
         public array $digest,
         public ?string $calendarUrl,
+        public string $kind = 'created',
+        public ?string $bookedBy = null,
     ) {}
 
     public function envelope(): Envelope
@@ -38,7 +40,9 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
             replyTo: $this->digest['owner_email']
                 ? [new Address($this->digest['owner_email'], $this->digest['owner_name'])]
                 : [],
-            subject: sprintf('New lead: %s (%s)', $client, $this->digest['owner_name']),
+            subject: $this->kind === 'meeting'
+                ? sprintf('Meeting scheduled: %s (%s)', $client, $this->digest['owner_name'])
+                : sprintf('New lead: %s (%s)', $client, $this->digest['owner_name']),
         );
     }
 
@@ -50,6 +54,8 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
                 'd' => $this->digest,
                 'calendarUrl' => $this->calendarUrl,
                 'recipientName' => $this->recipientName,
+                'kind' => $this->kind,
+                'bookedBy' => $this->bookedBy,
                 'logoPath' => dirname(__DIR__).'/Resources/assets/logo.png',
             ],
         );

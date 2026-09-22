@@ -19,11 +19,23 @@ return [
     'lead_type' => 'New Business',
 
     /**
-     * Placeholder forecast applied to every lead this form creates, in the
-     * account currency. The real number is set per lead once the scope of work
-     * and full-time vs part-time are known.
+     * Stage the quick "Create Lead" form drops a lead into: a client who sounded
+     * interested but has no meeting booked yet.
      */
-    'placeholder_lead_value' => 500,
+    'new_lead_stage' => 'new',
+
+    /**
+     * Every client starts on a retainer of at least this much a month, in the
+     * account currency. It is the default estimated lead value and the floor
+     * the forms accept; a rep raises it to suit the deal.
+     */
+    'minimum_lead_value' => 600,
+
+    /**
+     * Whether the client is after a part-time or a full-time VA. Shown on the
+     * kanban card in place of the price.
+     */
+    'engagement_types' => ['Part-time', 'Full-time'],
 
     /**
      * Days after the meeting used for the lead's expected close date.
