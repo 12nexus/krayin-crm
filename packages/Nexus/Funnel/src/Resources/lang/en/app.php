@@ -47,6 +47,11 @@ return [
         'meeting-from-lead' => 'Meetings are booked from the lead page (Schedule / Reschedule meeting) so the client\'s timezone is recorded and clashes are checked.',
     ],
 
+    'export' => [
+        'button' => 'Export CSV',
+        'hint'   => 'Download every lead on this board, with its current stage, as a CSV',
+    ],
+
     'copy' => [
         'copied' => 'Copied :value',
         'hint'   => 'Click to copy',

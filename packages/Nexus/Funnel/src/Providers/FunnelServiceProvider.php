@@ -65,6 +65,13 @@ class FunnelServiceProvider extends ServiceProvider
         );
 
         /**
+         * "Export CSV" on the board toolbar.
+         */
+        Event::listen('admin.leads.index.kanban.toolbar.card_settings.after', function ($viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('funnel::leads.export-button');
+        });
+
+        /**
          * Click-to-copy for email addresses and phone numbers.
          */
         Event::listen('admin.layout.body.after', function ($viewRenderEventManager) {

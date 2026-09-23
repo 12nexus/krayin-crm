@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nexus\Funnel\Http\Controllers\ExportController;
 use Nexus\Funnel\Http\Controllers\FunnelController;
 
 /**
@@ -9,6 +10,11 @@ use Nexus\Funnel\Http\Controllers\FunnelController;
  * user may see; both are checked in the controller.
  */
 Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => config('app.admin_path')], function () {
+    /**
+     * CSV of the board: every lead in the selected pipeline, with its stage.
+     */
+    Route::get('leads/export', [ExportController::class, 'csv'])->name('admin.leads.export');
+
     Route::controller(FunnelController::class)->prefix('leads/{id}/funnel')->group(function () {
         Route::post('valid', 'valid')->name('admin.leads.funnel.valid');
 
