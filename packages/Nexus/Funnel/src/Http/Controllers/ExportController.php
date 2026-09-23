@@ -194,7 +194,8 @@ class ExportController extends Controller
             ->whereNotNull('activities.schedule_from')
             ->whereIn('lead_activities.lead_id', $leadIds)
             ->groupBy('lead_activities.lead_id')
-            ->pluck(DB::raw('MAX(activities.id)'), 'lead_activities.lead_id');
+            ->selectRaw('lead_activities.lead_id as lead_id, MAX(activities.id) as activity_id')
+            ->pluck('activity_id', 'lead_id');
 
         if ($latest->isEmpty()) {
             return [];
