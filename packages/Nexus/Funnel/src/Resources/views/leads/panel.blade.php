@@ -120,6 +120,8 @@
 
 @if ($canEdit && $meetingButton)
     <v-funnel-meeting></v-funnel-meeting>
+
+    @include('sales_form::partials.day-plan')
 @endif
 
 @if ($canEdit && $canInvalidate)

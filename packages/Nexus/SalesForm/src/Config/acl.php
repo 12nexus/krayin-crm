@@ -11,6 +11,7 @@ return [
             'admin.sales_form.activity_calendar',
             'admin.sales_form.schedule',
             'admin.sales_form.schedule.store',
+            'admin.sales_form.day_plan',
         ],
         'sort' => 2,
     ],

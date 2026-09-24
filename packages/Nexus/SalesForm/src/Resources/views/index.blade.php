@@ -7,6 +7,8 @@
 
     @include('sales_form::partials.lookup-mixin')
 
+    @include('sales_form::partials.day-plan')
+
     @pushOnce('scripts')
         <script
             type="text/x-template"

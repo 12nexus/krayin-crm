@@ -15,6 +15,11 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
             ->name('admin.sales_form.activity_calendar');
 
         /**
+         * The shared sales calendar's events on a day, for the day plan.
+         */
+        Route::get('day-plan', 'dayPlan')->name('admin.sales_form.day_plan');
+
+        /**
          * The sales form against a lead that already exists.
          */
         Route::get('lead/{id}', 'schedule')->name('admin.sales_form.schedule');

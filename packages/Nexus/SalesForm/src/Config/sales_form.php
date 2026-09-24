@@ -86,6 +86,16 @@ return [
         'calendar_id' => env('SALES_FORM_CALENDAR_ID'),
     ],
 
+    /**
+     * The shared sales calendar's private iCal address ("Secret address in iCal
+     * format" in Google Calendar's settings). Shown as the day plan beside the
+     * meeting fields. It is a password for the calendar: keep it in .env only.
+     */
+    'calendar_feed' => [
+        'url'           => env('SALES_FORM_ICAL_URL'),
+        'cache_seconds' => 120,
+    ],
+
     'willingness' => [
         1 => '1 - Low',
         2 => '2 - Medium',

@@ -14,6 +14,7 @@ use Nexus\SalesForm\Http\Requests\NewLeadRequest;
 use Nexus\SalesForm\Http\Requests\SalesFormRequest;
 use Nexus\SalesForm\Listeners\LeadCreated;
 use Nexus\SalesForm\Services\AgentLookupService;
+use Nexus\SalesForm\Services\CalendarFeed;
 use Nexus\SalesForm\Services\CalendarLink;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\LeadDigest;
@@ -31,6 +32,7 @@ class SalesFormController extends Controller
         protected LeadDigest $leadDigest,
         protected CalendarLink $calendar,
         protected MeetingSlots $slots,
+        protected CalendarFeed $calendarFeed,
     ) {}
 
     /**
@@ -204,6 +206,53 @@ class SalesFormController extends Controller
         session()->flash('success', trans('sales_form::app.store.success', ['title' => $lead->title]));
 
         return redirect()->route('admin.leads.view', $lead->id);
+    }
+
+    /**
+     * What is already on the shared sales calendar on a day, shown next to the
+     * meeting fields so a rep sees a clash before booking. Times come back in
+     * the client's timezone once one is picked, else in the rep's own.
+     *
+     * Only administrators see event titles; the calendar holds every rep's
+     * client names, and a sales executive only sees their own leads.
+     */
+    public function dayPlan(): JsonResponse
+    {
+        if (! $this->calendarFeed->configured()) {
+            return response()->json(['configured' => false]);
+        }
+
+        $zone = CalendarFeed::zone(request('timezone'), request('zone'));
+
+        $date = request('date');
+
+        try {
+            $dayStart = $date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)
+                ? Carbon::createFromFormat('Y-m-d H:i:s', $date.' 00:00:00', $zone)
+                : Carbon::now($zone)->startOfDay();
+        } catch (\Throwable) {
+            $dayStart = Carbon::now($zone)->startOfDay();
+        }
+
+        try {
+            $plan = $this->calendarFeed->day($dayStart, $this->leadBuilder->canReassign());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'configured' => true,
+                'error'      => trans('sales_form::app.day-plan.unavailable'),
+            ]);
+        }
+
+        return response()->json([
+            'configured'      => true,
+            'date'            => $dayStart->format('Y-m-d'),
+            'date_label'      => $dayStart->format('l, j F Y'),
+            'zone_label'      => $dayStart->copy()->setTime(12, 0)->format('T'),
+            'is_client_zone'  => (bool) (request('timezone') && isset(config('sales_form.timezones')[request('timezone')])),
+            'meeting_minutes' => (int) config('sales_form.notify.meeting_minutes'),
+            'stale'           => $plan['stale'],
+            'events'          => $plan['events'],
+        ]);
     }
 
     /**

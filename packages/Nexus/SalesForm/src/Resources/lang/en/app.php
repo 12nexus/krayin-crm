@@ -85,6 +85,22 @@ return [
         'cancel'           => 'Cancel',
     ],
 
+    'day-plan' => [
+        'title'        => 'Sales calendar',
+        'times-client' => 'Times in :zone (the client\'s timezone)',
+        'times-yours'  => 'Times in :zone (your timezone). Pick the client\'s timezone to line it up with the meeting.',
+        'loading'      => 'Loading the calendar…',
+        'empty'        => 'Nothing on the calendar this day.',
+        'all-day'      => 'All day',
+        'this-meeting' => 'This meeting',
+        'free'         => 'free',
+        'clash'        => 'Overlaps with :count event(s) already on the sales calendar.',
+        'clear'        => 'No clash with the calendar at this time.',
+        'stale'        => 'Google Calendar could not be reached; showing the last copy.',
+        'unavailable'  => 'The sales calendar could not be loaded right now.',
+        'refresh'      => 'Refresh',
+    ],
+
     'schedule' => [
         'title'       => 'Schedule meeting: :name',
         'description' => 'Complete the sales form for this lead. It moves to Meeting Scheduled with the meeting below.',

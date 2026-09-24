@@ -6,7 +6,7 @@
     Rendered inside a Vue template whose component has `form.meeting_date`,
     `form.meeting_time`, `form.timezone`, `form.additional_information` and a
     `meetingError` (null unless an asynchronous submit reported a problem).
-    Needs $timezones.
+    Needs $timezones, and the page must include partials/day-plan once.
 --}}
                     <!-- ============ Meeting information ============ -->
                     <div class="box-shadow rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -61,6 +61,13 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        <!-- What is already on the shared sales calendar that day (partials/day-plan) -->
+                        <v-sales-day-plan
+                            :date="form.meeting_date"
+                            :time="form.meeting_time"
+                            :timezone="form.timezone"
+                        ></v-sales-day-plan>
 
                         <div class="mt-4">
                             <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
