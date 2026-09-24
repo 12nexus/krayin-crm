@@ -115,10 +115,9 @@ return new class extends Migration
             ]);
 
             foreach ($this->stages as $stage) {
+                // lead_pipeline_stages has no timestamp columns.
                 DB::table('lead_pipeline_stages')->insert(array_merge($stage, [
                     'lead_pipeline_id' => $pipelineId,
-                    'created_at'       => $now,
-                    'updated_at'       => $now,
                 ]));
             }
         }
