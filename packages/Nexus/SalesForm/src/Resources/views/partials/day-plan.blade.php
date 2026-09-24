@@ -6,6 +6,16 @@
     The server returns each event's times already converted into the day's
     zone, as minutes from midnight, so the clash check here is plain arithmetic.
 --}}
+@php
+    // Built here: Blade cannot parse a multi-line array inside @json().
+    $dayPlanStrings = [
+        'timesClient' => trans('sales_form::app.day-plan.times-client'),
+        'timesYours'  => trans('sales_form::app.day-plan.times-yours'),
+        'clash'       => trans('sales_form::app.day-plan.clash'),
+        'unavailable' => trans('sales_form::app.day-plan.unavailable'),
+    ];
+@endphp
+
 @pushOnce('scripts', 'nexus-day-plan')
     <script type="text/x-template" id="v-sales-day-plan-template">
         <div
@@ -94,12 +104,7 @@
                     plan: { events: [] },
                     request: 0,
 
-                    strings: @json([
-                        'timesClient' => trans('sales_form::app.day-plan.times-client'),
-                        'timesYours'  => trans('sales_form::app.day-plan.times-yours'),
-                        'clash'       => trans('sales_form::app.day-plan.clash'),
-                        'unavailable' => trans('sales_form::app.day-plan.unavailable'),
-                    ]),
+                    strings: @json($dayPlanStrings),
                 };
             },
 
