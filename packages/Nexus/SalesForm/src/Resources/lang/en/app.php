@@ -85,6 +85,28 @@ return [
         'cancel'           => 'Cancel',
     ],
 
+    /*
+     * Calendar invite description. The client reads this: keep it client-facing.
+     */
+    'invite' => [
+        'greeting'           => 'Hi :name,',
+        'greeting-no-name'   => 'Hello,',
+        'intro'              => 'Thanks for making time to speak with 12NexusBPO. This is a short discovery call about how a dedicated virtual assistant could take the day-to-day work off your plate, so you can spend more of your time with clients.',
+        'what-we-do'         => 'We provide trained virtual assistants for real estate agents, teams and brokerages. They can take on:',
+        'services'           => [
+            'Transaction coordination, from contract to close',
+            'CRM and lead management',
+            'Lead follow-up and appointment setting',
+            'Documents, presentations and client communication',
+            'Website, social media and content coordination',
+        ],
+        'agenda'             => 'On the call we will learn about your business, show you how our assistants work alongside you, walk through part-time and full-time options, and answer your questions. There is no obligation.',
+        'website'            => 'See what we do: :url',
+        'contact'            => 'Your contact at 12NexusBPO: :name:email',
+        'reschedule'         => 'Need a different time? Just let :name know.',
+        'reschedule-no-name' => 'Need a different time? Just let us know.',
+    ],
+
     'day-plan' => [
         'title'        => 'Sales calendar',
         'times-client' => 'Times in :zone (the client\'s timezone)',

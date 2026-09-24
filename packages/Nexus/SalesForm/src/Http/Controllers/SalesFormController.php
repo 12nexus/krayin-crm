@@ -16,6 +16,7 @@ use Nexus\SalesForm\Listeners\LeadCreated;
 use Nexus\SalesForm\Services\AgentLookupService;
 use Nexus\SalesForm\Services\CalendarFeed;
 use Nexus\SalesForm\Services\CalendarLink;
+use Nexus\SalesForm\Services\ClientInvite;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\LeadDigest;
 use Nexus\SalesForm\Services\LeadFields;
@@ -314,10 +315,13 @@ class SalesFormController extends Controller
             auth()->guard('user')->user()?->email,
         ]);
 
-        $details = implode("\n", array_filter([
-            $activity->comment ?: null,
-            ! empty($digest['url']) ? "\nLead in the CRM: ".$digest['url'] : null,
-        ]));
+        // The client is a guest on this event and reads the description, so it
+        // is the client-facing text, not the activity's internal comment.
+        $details = app(ClientInvite::class)->description(
+            $digest['client_name'] ?? null,
+            $digest['owner_name'] ?? null,
+            $digest['owner_email'] ?? null,
+        );
 
         return redirect()->away($this->calendar->build(
             $title,

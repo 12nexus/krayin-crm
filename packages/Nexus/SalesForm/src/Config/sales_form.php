@@ -96,6 +96,11 @@ return [
         'cache_seconds' => 120,
     ],
 
+    /**
+     * Linked from the calendar invite the client receives.
+     */
+    'website_url' => 'https://12nexusbpo.com',
+
     'willingness' => [
         1 => '1 - Low',
         2 => '2 - Medium',

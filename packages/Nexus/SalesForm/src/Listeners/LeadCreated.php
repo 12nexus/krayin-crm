@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Nexus\SalesForm\Mail\LeadCreatedNotification;
 use Nexus\SalesForm\Services\CalendarLink;
+use Nexus\SalesForm\Services\ClientInvite;
 use Nexus\SalesForm\Services\LeadDigest;
 
 class LeadCreated
@@ -108,14 +109,12 @@ class LeadCreated
             $digest['client_name'] ?: 'Lead'
         );
 
-        $details = implode("\n", array_filter([
-            'Discovery call booked by '.$digest['owner_name'].'.',
-            $digest['brokerage'] ? 'Brokerage: '.$digest['brokerage'] : null,
-            $digest['client_phone'] ? 'Phone: '.$digest['client_phone'] : null,
-            $digest['willingness'] ? 'Willingness to hire a VA: '.$digest['willingness'] : null,
-            $digest['notes'] ? "\nNotes from the call: ".$digest['notes'] : null,
-            "\nLead in the CRM: ".$digest['url'],
-        ]));
+        // The client is a guest on this event and reads the description.
+        $details = app(ClientInvite::class)->description(
+            $digest['client_name'],
+            $digest['owner_name'],
+            $digest['owner_email'],
+        );
 
         return $this->calendar->build(
             $title,
