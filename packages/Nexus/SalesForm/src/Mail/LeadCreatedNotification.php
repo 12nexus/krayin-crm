@@ -55,7 +55,7 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
     {
         $client = $this->digest['client_name'] ?: 'Lead';
 
-        $when = $this->digest['has_meeting'] ? ' · '.$this->when() : '';
+        $when = $this->digest['has_meeting'] ? ' · '.$this->meetingTime() : '';
 
         return new Envelope(
             to: [new Address($this->recipientEmail, $this->recipientName)],
@@ -70,7 +70,7 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
      * "Wed 30 Sep, 11:00 AM MT": the meeting in the client's own zone, short
      * enough for a subject line.
      */
-    protected function when(): string
+    protected function meetingTime(): string
     {
         try {
             $local = \Carbon\Carbon::parse($this->digest['meeting_local'])->format('D j M, g:i A');
