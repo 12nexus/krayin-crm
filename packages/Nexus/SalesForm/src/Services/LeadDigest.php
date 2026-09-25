@@ -99,6 +99,8 @@ class LeadDigest
             'timezone_label'   => $timezoneLabel,
             'timezone'         => $timezone,
             'has_meeting'      => $meetingLocal !== null && $timezone !== null,
+            'calendar_event_url' => app(MeetingCalendarSync::class)->currentLink($lead->id),
+            'calendar_sync'      => app(MeetingCalendarSync::class)->state($lead->id),
         ];
     }
 

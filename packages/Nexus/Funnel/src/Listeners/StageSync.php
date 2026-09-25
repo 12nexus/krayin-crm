@@ -38,6 +38,8 @@ class StageSync
                 $this->fields->set($lead->id, ['meeting_appeared' => config('funnel.appeared.attended')]);
 
                 $this->funnel->closeOpenMeetings($lead);
+
+                app(\Nexus\SalesForm\Services\MeetingCalendarSync::class)->markHeld($lead);
             }
         } catch (\Throwable $e) {
             Log::warning('Funnel stage sync failed', ['lead_id' => $lead->id ?? null, 'message' => $e->getMessage()]);

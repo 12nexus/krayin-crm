@@ -11,6 +11,7 @@ use Nexus\Funnel\Services\Funnel;
 use Nexus\SalesForm\Http\Requests\MeetingRequest;
 use Nexus\SalesForm\Listeners\LeadCreated;
 use Nexus\SalesForm\Services\LeadBuilder;
+use Nexus\SalesForm\Services\MeetingCalendarSync;
 use Nexus\SalesForm\Services\MeetingSlots;
 use Nexus\SalesForm\Support\LeadAccess;
 use Webkul\Lead\Contracts\Lead;
@@ -25,6 +26,7 @@ class FunnelController extends Controller
         protected Funnel $funnel,
         protected LeadBuilder $leadBuilder,
         protected MeetingSlots $slots,
+        protected MeetingCalendarSync $calendarSync,
     ) {}
 
     public function valid(int $id): RedirectResponse
@@ -44,7 +46,12 @@ class FunnelController extends Controller
 
         $reason = request()->validate(['reason' => ['nullable', 'string', 'max:2000']])['reason'] ?? null;
 
-        return $this->run($lead, fn () => $this->funnel->markInvalid($lead, $this->user(), $reason), 'invalid');
+        $response = $this->run($lead, fn () => $this->funnel->markInvalid($lead, $this->user(), $reason), 'invalid');
+
+        // Cancelling the upcoming calendar event tells the client and the team.
+        $this->calendarSync->cancel($lead);
+
+        return $response;
     }
 
     public function restore(int $id): RedirectResponse
@@ -62,7 +69,11 @@ class FunnelController extends Controller
     {
         $lead = $this->lead($id);
 
-        return $this->run($lead, fn () => $this->funnel->meetingHeld($lead, $this->user()), 'held');
+        $response = $this->run($lead, fn () => $this->funnel->meetingHeld($lead, $this->user()), 'held');
+
+        $this->calendarSync->markHeld($lead);
+
+        return $response;
     }
 
     public function noShow(int $id): RedirectResponse
@@ -94,6 +105,8 @@ class FunnelController extends Controller
         $lead = $this->slots->locked(fn () => DB::transaction(
             fn () => $this->leadBuilder->scheduleMeeting($lead, $request->validated(), $this->user(), $kind)
         ));
+
+        $this->calendarSync->syncLatestMeeting($lead, $kind);
 
         app(LeadCreated::class)->handle($lead, match ($kind) {
             'discovery' => 'meeting',

@@ -42,9 +42,10 @@ class LeadCreated
             $recipients = $this->administrators();
 
             foreach ($recipients as $admin) {
-                $calendarUrl = $digest['has_meeting']
-                    ? $this->calendarUrl($digest, $admin['email'])
-                    : null;
+                // On the calendar already: the button opens that event. If the
+                // sync is off or failed, fall back to the prefilled composer.
+                $calendarUrl = $digest['calendar_event_url']
+                    ?? ($digest['has_meeting'] ? $this->calendarUrl($digest, $admin['email']) : null);
 
                 Mail::queue(new LeadCreatedNotification(
                     $admin['email'],

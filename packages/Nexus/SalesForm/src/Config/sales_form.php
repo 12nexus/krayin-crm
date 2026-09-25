@@ -97,6 +97,16 @@ return [
     ],
 
     /**
+     * OAuth client (Google Cloud → Google Auth Platform → Clients, type "Web
+     * application") the CRM uses to book meetings straight onto the Sales Team
+     * calendar as the connected account. Secrets: .env only.
+     */
+    'google' => [
+        'client_id'     => env('GOOGLE_CALENDAR_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CALENDAR_CLIENT_SECRET'),
+    ],
+
+    /**
      * Linked from the calendar invite the client receives.
      */
     'website_url' => 'https://12nexusbpo.com',

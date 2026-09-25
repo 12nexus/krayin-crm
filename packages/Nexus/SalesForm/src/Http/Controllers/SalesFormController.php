@@ -20,6 +20,7 @@ use Nexus\SalesForm\Services\ClientInvite;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\LeadDigest;
 use Nexus\SalesForm\Services\LeadFields;
+use Nexus\SalesForm\Services\MeetingCalendarSync;
 use Nexus\SalesForm\Services\MeetingSlots;
 use Nexus\SalesForm\Support\LeadAccess;
 use Webkul\User\Repositories\UserRepository;
@@ -34,6 +35,7 @@ class SalesFormController extends Controller
         protected CalendarLink $calendar,
         protected MeetingSlots $slots,
         protected CalendarFeed $calendarFeed,
+        protected MeetingCalendarSync $calendarSync,
     ) {}
 
     /**
@@ -105,6 +107,8 @@ class SalesFormController extends Controller
                 ->withInput()
                 ->with('error', trans('sales_form::app.schedule.failed'));
         }
+
+        $this->calendarSync->syncLatestMeeting($lead, 'discovery');
 
         app(LeadCreated::class)->handle($lead, 'meeting');
 
@@ -202,6 +206,10 @@ class SalesFormController extends Controller
                 ->with('error', trans('sales_form::app.store.failed'));
         }
 
+        // Straight onto the Sales Team calendar, before the admin email so the
+        // email can link to the event. Never blocks the booking.
+        $this->calendarSync->syncLatestMeeting($lead, 'discovery');
+
         Event::dispatch('lead.create.after', $lead);
 
         session()->flash('success', trans('sales_form::app.store.success', ['title' => $lead->title]));
@@ -281,6 +289,11 @@ class SalesFormController extends Controller
                 : redirect()->route('admin.leads.index');
 
             return $return->with('error', trans('sales_form::app.activity.not-schedulable'));
+        }
+
+        // A meeting already on the Sales Team calendar opens there.
+        if ($link = $this->calendarSync->linkFor($id)) {
+            return redirect()->away($link);
         }
 
         $lead = $leadId ? app(\Webkul\Lead\Models\Lead::class)->find($leadId) : null;

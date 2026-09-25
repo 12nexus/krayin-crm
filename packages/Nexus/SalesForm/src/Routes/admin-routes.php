@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nexus\SalesForm\Http\Controllers\GoogleCalendarController;
 use Nexus\SalesForm\Http\Controllers\SalesFormController;
 
 Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => config('app.admin_path')], function () {
@@ -36,5 +37,21 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
         Route::get('', 'createNewLead')->name('admin.leads.new_lead');
 
         Route::post('', 'storeNewLead')->name('admin.leads.new_lead.store');
+    });
+
+    /**
+     * Settings → Google Calendar (administrators). Named under admin.settings.*
+     * so Krayin's route check also requires a settings permission.
+     */
+    Route::controller(GoogleCalendarController::class)->prefix('google-calendar')->group(function () {
+        Route::get('', 'index')->name('admin.settings.google_calendar.index');
+
+        Route::get('connect', 'connect')->name('admin.settings.google_calendar.connect');
+
+        Route::get('callback', 'callback')->name('admin.settings.google_calendar.callback');
+
+        Route::post('disconnect', 'disconnect')->name('admin.settings.google_calendar.disconnect');
+
+        Route::post('link-existing', 'linkExisting')->name('admin.settings.google_calendar.link_existing');
     });
 });
