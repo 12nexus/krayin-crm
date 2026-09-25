@@ -95,7 +95,11 @@ class FunnelController extends Controller
             fn () => $this->leadBuilder->scheduleMeeting($lead, $request->validated(), $this->user(), $kind)
         ));
 
-        app(LeadCreated::class)->handle($lead, 'meeting');
+        app(LeadCreated::class)->handle($lead, match ($kind) {
+            'discovery' => 'meeting',
+            'follow-up' => 'follow-up',
+            default     => 'rescheduled',
+        });
 
         session()->flash('success', trans('funnel::app.flash.meeting'));
 
