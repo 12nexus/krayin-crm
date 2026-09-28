@@ -120,6 +120,17 @@ class LeadController extends Controller
 
             $stage->lead_value = (clone $query)->sum('lead_value');
 
+            /**
+             * Packages may order a column through `admin.leads.kanban.stage.order`:
+             * each listener returns [expression, direction] pairs, applied ahead of
+             * the default most-recently-updated order.
+             */
+            foreach (Event::dispatch('admin.leads.kanban.stage.order', [$stage]) as $orders) {
+                foreach ((array) $orders as [$column, $direction]) {
+                    $query->orderBy($column, $direction);
+                }
+            }
+
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
             $data[$stage->sort_order]['leads'] = [

@@ -151,6 +151,19 @@
                         </div>
                     </div>
 
+                    <!-- ============ When to call back ============ -->
+                    <div class="box-shadow rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">
+                            @lang('sales_form::app.call.title')
+                        </p>
+
+                        <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                            @lang('sales_form::app.call.hint')
+                        </p>
+
+                        @include('sales_form::partials.call-fields')
+                    </div>
+
                     <!-- ============ Optional details ============ -->
                     <div class="box-shadow rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p class="text-base font-semibold text-gray-800 dark:text-white">
@@ -221,6 +234,8 @@
                             state: @json(old('state', '')),
                             engagement_type: @json(old('engagement_type', '')),
                             lead_value: @json(old('lead_value', $minimumValue)),
+                            call_at: @json(old('call_at', '')),
+                            call_timezone: @json(old('call_timezone', '')),
                         },
                     };
                 },

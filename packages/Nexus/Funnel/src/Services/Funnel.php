@@ -70,6 +70,8 @@ class Funnel
 
         $this->closeOpenMeetings($lead, 'cancelled, lead invalid');
 
+        $this->leadBuilder->closeOpenCalls($lead->id, 'cancelled, lead invalid');
+
         $reason = trim((string) $reason);
 
         $this->note($lead, $by, "Marked INVALID and archived by {$by->name} (was in {$from}).".
@@ -152,7 +154,32 @@ class Funnel
     }
 
     /**
-     * A meeting row shown in the agent's own zone when the lead records one.
+     * The time to call a New Lead back: its most recent Call, which after any
+     * reschedule is the one that counts. Shown in the client's zone.
+     *
+     * @return array{id: int, from: Carbon, local: Carbon, zone: string, label: string, done: bool, upcoming: bool}|null
+     */
+    public function currentCall(Lead $lead, ?string $timezoneLabel = null): ?array
+    {
+        $call = DB::table('activities')
+            ->join('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
+            ->where('lead_activities.lead_id', $lead->id)
+            ->where('activities.type', 'call')
+            ->whereNotNull('activities.schedule_from')
+            ->orderByDesc('activities.id')
+            ->first(['activities.id', 'activities.schedule_from', 'activities.is_done']);
+
+        if (! $call) {
+            return null;
+        }
+
+        $timezoneLabel ??= $this->fields->get($lead->id)['meeting_timezone'] ?? null;
+
+        return $this->present($call, $timezoneLabel);
+    }
+
+    /**
+     * A meeting or call row shown in the agent's own zone when the lead records one.
      */
     public function present(object $meeting, ?string $timezoneLabel): array
     {

@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Nexus\Funnel\Services\Funnel;
+use Nexus\SalesForm\Http\Requests\CallRequest;
 use Nexus\SalesForm\Http\Requests\MeetingRequest;
 use Nexus\SalesForm\Listeners\LeadCreated;
 use Nexus\SalesForm\Services\LeadBuilder;
@@ -17,7 +18,7 @@ use Webkul\Lead\Contracts\Lead;
 
 /**
  * The funnel actions on the lead view: valid / invalid, meeting held, no-show,
- * (re)scheduling a meeting, and restoring an archived lead.
+ * (re)scheduling a meeting or a call back, and restoring an archived lead.
  */
 class FunnelController extends Controller
 {
@@ -105,6 +106,35 @@ class FunnelController extends Controller
 
         return new JsonResponse([
             'message'  => trans('funnel::app.flash.meeting'),
+            'redirect' => route('admin.leads.view', $lead->id),
+        ]);
+    }
+
+    /**
+     * A new time to call a New Lead back. Logged as a fresh Call entry; the
+     * earlier one is closed as rescheduled.
+     */
+    public function call(CallRequest $request, int $id): JsonResponse
+    {
+        $lead = $this->lead($id);
+
+        if ($this->funnel->stageCode($lead) !== 'new' || $this->funnel->isArchived($lead)) {
+            abort(422, trans('funnel::app.errors.call-new-only'));
+        }
+
+        $first = ! $this->funnel->currentCall($lead);
+
+        DB::transaction(fn () => $this->leadBuilder->scheduleCall(
+            $lead,
+            $request->validated(),
+            $this->user(),
+            $first ? 'Call back time set.' : 'Call back rescheduled.'
+        ));
+
+        session()->flash('success', trans('funnel::app.flash.call'));
+
+        return new JsonResponse([
+            'message'  => trans('funnel::app.flash.call'),
             'redirect' => route('admin.leads.view', $lead->id),
         ]);
     }

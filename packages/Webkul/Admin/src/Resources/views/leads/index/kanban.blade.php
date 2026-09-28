@@ -171,11 +171,37 @@
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
+                                    <!-- New Lead: when to call back, else the discovery notes (12Nexus) -->
+                                    <p
+                                        class="flex items-center gap-1 text-xs font-medium"
+                                        :class="{ 'text-red-600': element.extra.call.overdue }"
+                                        :title="element.extra.call.overdue ? '@lang('admin::app.leads.index.kanban.call-overdue')' : '@lang('admin::app.leads.index.kanban.call-back')'"
+                                        v-if="stage.code === 'new' && element.extra?.call"
+                                    >
+                                        <span class="icon-call text-base"></span>
+
+                                        @{{ element.extra.call.label }}
+                                    </p>
+
+                                    <p
+                                        class="line-clamp-3 whitespace-pre-line text-xs text-gray-600 dark:text-gray-400"
+                                        v-else-if="stage.code === 'new' && element.extra?.notes"
+                                    >
+                                        @{{ element.extra.notes }}
+                                    </p>
+
+                                    <p
+                                        class="text-xs text-gray-500"
+                                        v-else-if="stage.code === 'new'"
+                                    >
+                                        @lang('admin::app.leads.index.kanban.no-call')
+                                    </p>
+
                                     <!-- Most recent meeting, in the agent's own timezone (12Nexus) -->
                                     <p
                                         class="flex items-center gap-1 text-xs font-medium"
                                         :class="{ 'opacity-60': element.extra?.meeting?.done }"
-                                        v-if="element.extra?.meeting"
+                                        v-else-if="element.extra?.meeting"
                                     >
                                         <span class="icon-calendar text-base"></span>
 

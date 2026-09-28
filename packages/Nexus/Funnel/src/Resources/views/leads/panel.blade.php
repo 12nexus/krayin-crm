@@ -18,6 +18,11 @@
     $canEdit = bouncer()->hasPermission('leads.edit');
     $canInvalidate = ! $archived && in_array($stage, config('funnel.invalidatable'), true);
 
+    // New Lead: when to call the client back.
+    $hasCall = $stage === 'new' && ! $archived;
+    $call = $hasCall ? $funnel->currentCall($lead, $fields['meeting_timezone'] ?? null) : null;
+    $openCall = $call && ! $call['done'];
+
     $meetingButton = match (true) {
         $archived || in_array($stage, ['won', 'lost', 'new'], true) => null,
         $stage === 'no-show'           => trans('funnel::app.panel.reschedule'),
@@ -61,6 +66,34 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">@lang('funnel::app.panel.no-meeting')</p>
     @endif
 
+    @if ($hasCall)
+        <div class="flex flex-col gap-1 border-t border-gray-200 pt-2 dark:border-gray-800">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                @lang('funnel::app.panel.call')
+            </span>
+
+            @if ($call)
+                <div @class([
+                    'flex items-center gap-1.5 text-sm font-semibold',
+                    'text-gray-800 dark:text-white' => $openCall,
+                    'text-gray-500' => ! $openCall,
+                ])>
+                    <span class="icon-call text-lg"></span>
+
+                    <span>{{ $call['label'] }}</span>
+                </div>
+
+                @if ($call['done'])
+                    <p class="text-xs text-gray-500">@lang('funnel::app.panel.call-closed')</p>
+                @elseif (! $call['upcoming'])
+                    <p class="text-xs text-amber-700">@lang('funnel::app.panel.call-passed')</p>
+                @endif
+            @else
+                <p class="text-sm text-gray-500 dark:text-gray-400">@lang('funnel::app.panel.no-call')</p>
+            @endif
+        </div>
+    @endif
+
     @if ($canEdit)
         <div class="flex flex-wrap gap-2 pt-1">
             @if ($archived)
@@ -74,6 +107,18 @@
                 <a href="{{ route('admin.sales_form.schedule', $lead->id) }}" class="primary-button">
                     @lang('funnel::app.panel.schedule')
                 </a>
+            @endif
+
+            @if ($hasCall)
+                <button
+                    type="button"
+                    class="secondary-button"
+                    @click="$emitter.emit('nexus-open-call-modal')"
+                >
+                    <span class="icon-call text-lg"></span>
+
+                    {{ $openCall ? trans('funnel::app.panel.reschedule-call') : trans('funnel::app.panel.set-call') }}
+                </button>
             @endif
 
             @if ($stage === 'meeting-scheduled' && ! $archived)
@@ -128,6 +173,10 @@
     <v-funnel-invalid></v-funnel-invalid>
 @endif
 
+@if ($canEdit && $hasCall)
+    <v-funnel-call></v-funnel-call>
+@endif
+
 @pushOnce('scripts')
     <script type="text/x-template" id="v-funnel-meeting-template">
         <x-admin::modal ref="meetingModal">
@@ -155,6 +204,59 @@
                     @click="submit"
                 >
                     <span v-if="! submitting">@lang('funnel::app.meeting-modal.save')</span>
+                    <span v-else>…</span>
+                </button>
+            </x-slot>
+        </x-admin::modal>
+    </script>
+
+    <script type="text/x-template" id="v-funnel-call-template">
+        <x-admin::modal ref="callModal">
+            <x-slot:header>
+                <h3 class="text-base font-semibold dark:text-white">
+                    {{ $openCall ? trans('funnel::app.panel.reschedule-call') : trans('funnel::app.panel.set-call') }}
+                </h3>
+            </x-slot>
+
+            <x-slot:content>
+                <form ref="form" @submit.prevent="submit" class="flex flex-col gap-3">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        @lang('funnel::app.call-modal.hint')
+                    </p>
+
+                    @include('sales_form::partials.call-fields', [
+                        'timezones'    => array_keys(config('sales_form.timezones')),
+                        'callRequired' => true,
+                    ])
+
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
+                            @lang('funnel::app.call-modal.note')
+                        </label>
+
+                        <textarea
+                            v-model="form.call_note"
+                            rows="2"
+                            class="w-full rounded border border-gray-300 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        ></textarea>
+                    </div>
+
+                    <div
+                        v-if="callError"
+                        class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+                        v-text="callError"
+                    ></div>
+                </form>
+            </x-slot>
+
+            <x-slot:footer>
+                <button
+                    type="button"
+                    class="primary-button"
+                    :disabled="submitting"
+                    @click="submit"
+                >
+                    <span v-if="! submitting">@lang('funnel::app.call-modal.save')</span>
                     <span v-else>…</span>
                 </button>
             </x-slot>
@@ -248,6 +350,63 @@
                             const errors = error.response?.data?.errors;
 
                             this.meetingError = errors
+                                ? Object.values(errors).flat().join(' ')
+                                : (error.response?.data?.message || "@lang('funnel::app.errors.failed')");
+                        });
+                },
+            },
+        });
+
+        app.component('v-funnel-call', {
+            template: '#v-funnel-call-template',
+
+            data() {
+                return {
+                    submitting: false,
+
+                    callError: null,
+
+                    form: {
+                        call_at: '',
+                        call_timezone: @json($fields['meeting_timezone'] ?? ''),
+                        call_note: '',
+                    },
+                };
+            },
+
+            mounted() {
+                this.$emitter.on('nexus-open-call-modal', () => {
+                    this.callError = null;
+
+                    this.$refs.callModal.open();
+                });
+            },
+
+            methods: {
+                submit() {
+                    if (! this.$refs.form.reportValidity()) {
+                        return;
+                    }
+
+                    if (! this.form.call_at) {
+                        this.callError = "@lang('sales_form::app.call.placeholder')";
+
+                        return;
+                    }
+
+                    this.submitting = true;
+                    this.callError = null;
+
+                    this.$axios.post("{{ route('admin.leads.funnel.call', $lead->id) }}", this.form)
+                        .then(({ data }) => {
+                            window.location.href = data.redirect;
+                        })
+                        .catch((error) => {
+                            this.submitting = false;
+
+                            const errors = error.response?.data?.errors;
+
+                            this.callError = errors
                                 ? Object.values(errors).flat().join(' ')
                                 : (error.response?.data?.message || "@lang('funnel::app.errors.failed')");
                         });

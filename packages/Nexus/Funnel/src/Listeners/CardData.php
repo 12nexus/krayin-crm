@@ -7,11 +7,12 @@ use Nexus\Funnel\Services\Funnel;
 
 /**
  * What the kanban card shows in place of the title and the price: the lead's
- * most recent meeting in the agent's own timezone, part-time or full-time, and
- * whether the lead has been checked as valid.
+ * most recent meeting in the agent's own timezone (on a New Lead, when to call
+ * the client back, or failing that the discovery notes), part-time or
+ * full-time, and whether the lead has been checked as valid.
  *
  * Reads the attribute values Krayin already eager-loads for the board, so the
- * only extra query per card is the meeting.
+ * only extra query per card is the meeting, and the call on a New Lead.
  */
 class CardData
 {
@@ -38,8 +39,26 @@ class CardData
             ];
         }
 
+        $call = null;
+        $notes = null;
+
+        if ($lead->stage?->code === 'new') {
+            $current = $this->funnel->currentCall($lead, $fields['meeting_timezone'] ?? null);
+
+            if ($current && ! $current['done']) {
+                $call = [
+                    'label'   => $current['label'],
+                    'overdue' => ! $current['upcoming'],
+                ];
+            }
+
+            $notes = trim((string) ($fields['source_notes'] ?? '')) ?: null;
+        }
+
         return [
             'meeting'    => $meeting,
+            'call'       => $call,
+            'notes'      => $notes,
             'engagement' => $fields['engagement_type'] ?? null,
             'validity'   => $fields['lead_validity'] ?? null,
         ];
@@ -49,7 +68,7 @@ class CardData
     {
         $this->codes ??= DB::table('attributes')
             ->where('entity_type', 'leads')
-            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity'])
+            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity', 'source_notes'])
             ->pluck('code', 'id')
             ->all();
 
@@ -62,7 +81,9 @@ class CardData
 
         foreach ($lead->attribute_values ?? [] as $value) {
             if ($code = $this->codes[$value->attribute_id] ?? null) {
-                $fields[$code] = $this->options[$value->integer_value] ?? null;
+                $fields[$code] = $code === 'source_notes'
+                    ? $value->text_value
+                    : ($this->options[$value->integer_value] ?? null);
             }
         }
 

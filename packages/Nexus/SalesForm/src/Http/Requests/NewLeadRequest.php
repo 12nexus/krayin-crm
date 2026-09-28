@@ -29,7 +29,7 @@ class NewLeadRequest extends FormRequest
             'state'           => ['nullable', 'string', 'max:255'],
             'engagement_type' => ['nullable', Rule::in(config('sales_form.engagement_types'))],
             'lead_value'      => ['nullable', 'numeric', 'min:'.config('sales_form.minimum_lead_value'), 'max:1000000'],
-        ];
+        ] + CallTimeRule::rules(false);
     }
 
     public function attributes(): array
@@ -40,6 +40,8 @@ class NewLeadRequest extends FormRequest
             'note'            => 'Additional Note',
             'engagement_type' => 'Part-time / Full-time',
             'lead_value'      => 'Estimated monthly value',
+            'call_at'         => 'Call back at',
+            'call_timezone'   => 'Client timezone',
         ];
     }
 
@@ -56,6 +58,8 @@ class NewLeadRequest extends FormRequest
             if (! PhoneRule::isValid($this->input('phone'))) {
                 $validator->errors()->add('phone', 'Enter a valid 10-digit phone number.');
             }
+
+            CallTimeRule::check($this, $validator);
         });
     }
 }

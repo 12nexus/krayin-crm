@@ -27,5 +27,7 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
         Route::post('no-show', 'noShow')->name('admin.leads.funnel.no_show');
 
         Route::post('meeting', 'meeting')->name('admin.leads.funnel.meeting');
+
+        Route::post('call', 'call')->name('admin.leads.funnel.call');
     });
 });

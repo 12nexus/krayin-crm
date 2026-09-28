@@ -4,6 +4,7 @@ namespace Nexus\Funnel\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Nexus\Funnel\Listeners\BoardOrder;
 use Nexus\Funnel\Listeners\CardData;
 use Nexus\Funnel\Listeners\MeetingGuard;
 use Nexus\Funnel\Listeners\StageSync;
@@ -29,9 +30,15 @@ class FunnelServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'funnel');
 
         /**
-         * Kanban card: meeting time, part-time/full-time and validity.
+         * Kanban card: meeting time (call back or notes on a New Lead),
+         * part-time/full-time and validity.
          */
         Event::listen('admin.leads.resource.extra', [CardData::class, 'handle']);
+
+        /**
+         * Each board column: soonest open meeting (call back in New Lead) first.
+         */
+        Event::listen('admin.leads.kanban.stage.order', [BoardOrder::class, 'handle']);
 
         /**
          * Keep "Meeting Appeared?" in step with drag-and-drop stage moves.

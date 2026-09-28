@@ -78,11 +78,23 @@ return [
         'owner'            => 'Sales Owner',
         'name'             => 'Name',
         'note'             => 'Additional Note',
-        'note-placeholder' => 'What the client said, when to call back, anything the next call should know.',
+        'note-placeholder' => 'What the client said, anything the next call should know.',
         'optional'         => 'More details (optional)',
         'optional-hint'    => 'Filled in from the agent list when the number matches. Leave blank if unknown.',
         'submit'           => 'Create Lead',
         'cancel'           => 'Cancel',
+    ],
+
+    /*
+     * When to call a New Lead back.
+     */
+    'call' => [
+        'title'       => 'When to call back (optional)',
+        'hint'        => 'Pick the date and time the client asked to be called, in their own timezone. It shows on the lead\'s card on the board and in the Planned activities.',
+        'at'          => 'Call back at',
+        'timezone'    => 'Client timezone',
+        'placeholder' => 'Pick a date and time',
+        'clear'       => 'Clear',
     ],
 
     /*

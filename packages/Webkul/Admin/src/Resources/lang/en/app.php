@@ -1875,6 +1875,9 @@ return [
                 'empty-list-description' => 'Create a lead to organize your goals.',
                 'create-lead-btn' => 'Create Lead',
                 'no-meeting' => 'No meeting scheduled',
+                'no-call' => 'No call back time set',
+                'call-back' => 'Call back',
+                'call-overdue' => 'Call back time has passed',
                 'valid' => 'Valid',
                 'columns' => [
                     'contact-person' => 'Contact Person',

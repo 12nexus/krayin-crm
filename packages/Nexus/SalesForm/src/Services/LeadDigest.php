@@ -63,6 +63,24 @@ class LeadDigest
         $timezoneLabel = $fields['meeting_timezone'] ?? '';
         $timezone = config('sales_form.timezones')[$timezoneLabel] ?? null;
 
+        // When to call a New Lead back: its latest open Call, in the client's zone.
+        $callDisplay = null;
+
+        $callFrom = DB::table('activities')
+            ->join('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
+            ->where('lead_activities.lead_id', $lead->id)
+            ->where('activities.type', 'call')
+            ->where('activities.is_done', 0)
+            ->whereNotNull('activities.schedule_from')
+            ->orderByDesc('activities.id')
+            ->value('activities.schedule_from');
+
+        if ($callFrom) {
+            $callDisplay = Carbon::parse($callFrom, 'UTC')
+                ->setTimezone($timezone ?? config('app.timezone', 'UTC'))
+                ->format('l, j F Y \a\t g:i A').($timezone ? ' '.$timezoneLabel : ' UTC');
+        }
+
         return [
             'id'             => $lead->id,
             'title'          => $lead->title,
@@ -99,6 +117,7 @@ class LeadDigest
             'timezone_label'   => $timezoneLabel,
             'timezone'         => $timezone,
             'has_meeting'      => $meetingLocal !== null && $timezone !== null,
+            'call_display'     => $callDisplay,
         ];
     }
 

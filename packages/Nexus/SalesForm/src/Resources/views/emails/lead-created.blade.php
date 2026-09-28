@@ -14,6 +14,7 @@
         'Client'          => $d['client_name'],
         'Email'           => $d['client_email'],
         'Phone'           => $d['client_phone'],
+        'Call back'       => $d['call_display'] ?? null,
         'Brokerage'       => $d['brokerage'],
         'Location'        => trim(implode(', ', array_filter([$d['city'], $d['state'], $d['country']])), ', '),
         'Experience'      => $d['experience'],

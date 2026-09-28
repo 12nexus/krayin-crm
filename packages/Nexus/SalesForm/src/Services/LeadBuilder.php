@@ -22,6 +22,7 @@ use Webkul\User\Models\User;
  *  - createNewLead()   Quick "Create Lead" form: an interested client, no meeting yet.
  *  - scheduleForLead() The sales form filled in against an existing lead.
  *  - scheduleMeeting() A meeting on its own: reschedules and follow-ups.
+ *  - scheduleCall()    When to call a New Lead back, and any change to it.
  */
 class LeadBuilder
 {
@@ -178,6 +179,14 @@ class LeadBuilder
 
         $this->recordIntake($lead->id, $person->id, $intake, $owner);
 
+        if (! empty($input['call_at'])) {
+            $this->scheduleCall($lead, [
+                'call_at'       => $input['call_at'],
+                'call_timezone' => $input['call_timezone'],
+                'call_note'     => $note,
+            ], $submittedBy, 'Call back agreed on the first call.');
+        }
+
         $this->pruneCreationAuditNoise($lead->id, $person->id, $activityHighWaterMark);
 
         return $lead;
@@ -291,6 +300,11 @@ class LeadBuilder
 
         $this->addMeeting($lead, $lead->person_id, $input, $by, $title, $context);
 
+        // The call back on a New Lead has done its job once the meeting is booked.
+        if ($previousStage === 'new') {
+            $this->closeOpenCalls($lead->id, 'meeting booked');
+        }
+
         $this->fields->set($lead->id, [
             'meeting_appeared' => 'Pending',
         ]);
@@ -300,6 +314,76 @@ class LeadBuilder
         }
 
         return $lead->refresh();
+    }
+
+    /**
+     * When to call a New Lead back: a Call activity at the client's local time,
+     * stored in UTC like meetings are. A new time is a new Call entry, with the
+     * earlier open ones closed as rescheduled, so the lead's history keeps every
+     * time that was agreed and the card shows the latest.
+     *
+     * Calls are not clash-checked: the rep only has to ring the client.
+     *
+     * @param  array{call_at: string, call_timezone: string, call_note?: ?string}  $input
+     */
+    public function scheduleCall(Lead $lead, array $input, User $by, string $context): void
+    {
+        $lead->loadMissing('person');
+
+        $rescheduled = $this->closeOpenCalls($lead->id, 'rescheduled');
+
+        $zone = config('sales_form.timezones')[$input['call_timezone']] ?? 'UTC';
+        $local = Carbon::createFromFormat('Y-m-d H:i', $input['call_at'], $zone);
+        $utc = $local->copy()->setTimezone('UTC');
+        $note = trim((string) ($input['call_note'] ?? ''));
+
+        $call = $this->activityRepository->create([
+            'title'         => sprintf('%s — %s', $rescheduled ? 'Call back (rescheduled)' : 'Call back', $lead->person?->name ?: 'Lead'),
+            'type'          => 'call',
+            'comment'       => sprintf(
+                "%s\nClient local time: %s (%s).\nStored in UTC: %s.\nScheduled by: %s.%s",
+                $context,
+                $local->format('D j M Y, g:i A'),
+                $input['call_timezone'],
+                $utc->format('Y-m-d H:i:s'),
+                $by->name,
+                $note !== '' ? "\n\nNotes: ".$note : ''
+            ),
+            'schedule_from' => $utc->format('Y-m-d H:i:s'),
+            'schedule_to'   => $utc->copy()->addMinutes((int) config('sales_form.call_minutes'))->format('Y-m-d H:i:s'),
+            'user_id'       => $lead->user_id ?? $by->id,
+            'is_done'       => 0,
+        ]);
+
+        $this->attach($call->id, $lead->id, $lead->person_id);
+
+        // The client's zone: it also preselects the zone when a meeting is booked.
+        $this->fields->set($lead->id, ['meeting_timezone' => $input['call_timezone']]);
+    }
+
+    /**
+     * Close the lead's open calls, tagging each with what became of it.
+     *
+     * @return int how many were closed
+     */
+    public function closeOpenCalls(int $leadId, string $outcome): int
+    {
+        $open = DB::table('activities')
+            ->join('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
+            ->where('lead_activities.lead_id', $leadId)
+            ->where('activities.type', 'call')
+            ->where('activities.is_done', 0)
+            ->get(['activities.id', 'activities.title']);
+
+        foreach ($open as $call) {
+            DB::table('activities')->where('id', $call->id)->update([
+                'is_done'    => 1,
+                'title'      => $call->title.' ('.$outcome.')',
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $open->count();
     }
 
     /**

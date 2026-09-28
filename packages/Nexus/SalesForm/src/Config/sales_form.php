@@ -38,6 +38,12 @@ return [
     'engagement_types' => ['Part-time', 'Full-time'],
 
     /**
+     * Length of the Call activity booked when a rep agrees a time to call a New
+     * Lead back.
+     */
+    'call_minutes' => 15,
+
+    /**
      * Days after the meeting used for the lead's expected close date.
      */
     'close_date_offset_days' => 14,
