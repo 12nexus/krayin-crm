@@ -81,6 +81,7 @@ class LeadBuilder
 
         $this->fields->set($lead->id, [
             'brokerage'           => $who['brokerage'],
+            'firm'                => $who['firm_name'],
             'agent_city'          => $who['city'],
             'agent_state'         => $who['state'],
             'agent_country'       => $who['country'],
@@ -149,6 +150,7 @@ class LeadBuilder
 
         $this->fields->set($lead->id, [
             'brokerage'          => $who['brokerage'],
+            'firm'               => $who['firm_name'],
             'agent_city'         => $who['city'],
             'agent_state'        => $who['state'],
             'agent_country'      => $who['country'],
@@ -169,6 +171,7 @@ class LeadBuilder
             .'Phone Number: '.$this->lookup->formatPhone($input['phone'])."\n"
             .'Name: '.$blank($input['lead_name'] ?? null)."\n"
             .'Email: '.$blank($input['email'] ?? null)."\n"
+            .'Firm: '.$blank(AgentLookupService::firmName($input['firm'] ?? null))."\n"
             .'Brokerage: '.$blank($input['brokerage'] ?? null)."\n"
             .'City: '.$blank($input['city'] ?? null)."\n"
             .'State: '.$blank($input['state'] ?? null)."\n"
@@ -224,6 +227,7 @@ class LeadBuilder
 
         $this->fields->set($lead->id, [
             'brokerage'           => $who['brokerage'],
+            'firm'                => $who['firm_name'],
             'agent_city'          => $who['city'],
             'agent_state'         => $who['state'],
             'agent_country'       => $who['country'],
@@ -421,6 +425,9 @@ class LeadBuilder
 
         $state = $this->pick($input['state'] ?? null, $verified['state'] ?? null);
 
+        // The firm the rep chose, else the list the number matched in.
+        $firm = ! empty($input['firm']) ? $input['firm'] : ($verified['firm'] ?? null);
+
         return [
             'matched'    => $agent['found'],
             'verified'   => $verified,
@@ -428,7 +435,9 @@ class LeadBuilder
             'city'       => $this->pick($input['city'] ?? null, $verified['city'] ?? null),
             'state'      => $state,
             'state_code' => $verified['state_code'] ?? $this->lookup->stateCode($state),
-            'brokerage'  => $this->pick($input['brokerage'] ?? null, config('sales_form.default_brokerage')),
+            'firm'       => $firm,
+            'firm_name'  => AgentLookupService::firmName($firm),
+            'brokerage'  => $this->pick($input['brokerage'] ?? null, AgentLookupService::firmName($firm)),
             'country'    => $verified['country'] ?? '',
         ];
     }
@@ -624,6 +633,7 @@ class LeadBuilder
                 .' ('.($input['willingness'] ?? '?')." on a 1-3 scale)\n"
             .'Part-time / Full-time: '.$blank($input['engagement_type'] ?? null)."\n"
             .'Estimated monthly value: '.$this->leadValue($input)."\n"
+            .'Firm: '.$blank(AgentLookupService::firmName($input['firm'] ?? null))."\n"
             .'Brokerage: '.$blank($input['brokerage'] ?? null)."\n"
             .'City: '.$blank($input['city'] ?? null)."\n"
             .'State: '.$blank($input['state'] ?? null)."\n"
@@ -641,7 +651,7 @@ class LeadBuilder
         $verified = $who['verified'];
 
         if ($who['matched'] && $verified) {
-            return "--- VERIFIED AGAINST THE ViciDial eXp AGENT LIST (matched on phone) ---\n"
+            return '--- VERIFIED AGAINST THE ViciDial '.strtoupper($verified['firm_name'])." AGENT LIST (matched on phone) ---\n"
                 ."Verified name: {$verified['full_name']}\n"
                 .'Verified email: '.($verified['email'] ?: '(none on file)')."\n"
                 .'Location on file: '.trim(($verified['city'] ?? '').', '.($verified['state'] ?? ''), ', ')
@@ -651,7 +661,7 @@ class LeadBuilder
         }
 
         return "--- ViciDial LOOKUP ---\n"
-            ."No matching agent for this phone number in the ViciDial eXp list.\n"
+            .'No matching agent for this phone number in the ViciDial '.implode(' or ', array_column(config('sales_form.firms'), 'name'))." lists.\n"
             ."Contact details above were entered manually by the rep.\n";
     }
 

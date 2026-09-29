@@ -10,10 +10,11 @@ class ImportViciDialAgents extends Command
 {
     protected $signature = 'nexus:import-vicidial
         {file : Path to the ViciDial agent CSV export}
-        {--truncate : Empty the table before importing}
+        {--firm= : Whose agent list this is: a key of sales_form.firms (exp, remax)}
+        {--truncate : Remove the agents already on file for this firm first (other firms are kept)}
         {--chunk=1000 : Rows per insert batch}';
 
-    protected $description = 'Import the ViciDial eXp agent list into vicidial_agents for phone lookups.';
+    protected $description = 'Import a firm\'s ViciDial agent list (eXp, RE/MAX) into vicidial_agents for phone lookups.';
 
     /**
      * CSV header => table column. Anything not listed is ignored.
@@ -53,9 +54,17 @@ class ImportViciDialAgents extends Command
             return self::FAILURE;
         }
 
+        $firm = (string) $this->option('firm');
+
+        if (! config('sales_form.firms.'.$firm)) {
+            $this->error('Say whose list this is with --firm='.implode('|', array_keys(config('sales_form.firms'))).'.');
+
+            return self::FAILURE;
+        }
+
         if ($this->option('truncate')) {
-            DB::table('vicidial_agents')->truncate();
-            $this->warn('Table truncated.');
+            $removed = DB::table('vicidial_agents')->where('firm', $firm)->delete();
+            $this->warn("Removed $removed existing $firm agent(s).");
         }
 
         $handle = fopen($file, 'r');
@@ -96,7 +105,7 @@ class ImportViciDialAgents extends Command
         $this->info('Importing…');
 
         while (($row = fgetcsv($handle)) !== false) {
-            $record = ['created_at' => $now, 'updated_at' => $now];
+            $record = ['firm' => $firm, 'created_at' => $now, 'updated_at' => $now];
 
             foreach ($indexes as $dbColumn => $position) {
                 $value = $row[$position] ?? null;
@@ -104,7 +113,7 @@ class ImportViciDialAgents extends Command
             }
 
             $record['phone'] = ViciDialAgent::normalizePhone($record['phone'] ?? '');
-            $record['alt_phone'] = $record['alt_phone']
+            $record['alt_phone'] = ! empty($record['alt_phone'])
                 ? ViciDialAgent::normalizePhone($record['alt_phone'])
                 : null;
 
@@ -134,7 +143,7 @@ class ImportViciDialAgents extends Command
 
         $this->newLine();
         $this->info("Imported $imported agents. Skipped $skipped row(s) without a phone number.");
-        $this->info('Total in table: '.DB::table('vicidial_agents')->count());
+        $this->info("Total $firm agents: ".DB::table('vicidial_agents')->where('firm', $firm)->count());
 
         return self::SUCCESS;
     }

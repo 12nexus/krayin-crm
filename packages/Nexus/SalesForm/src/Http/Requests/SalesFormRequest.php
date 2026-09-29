@@ -28,6 +28,7 @@ class SalesFormRequest extends FormRequest
             'using_assistant'        => ['nullable', Rule::in(['Yes', 'No'])],
             'assistant_type'         => ['nullable', Rule::in(['None', 'Remote VA', 'In-house Assistant', 'Other'])],
             'willingness'            => ['nullable', 'integer', 'between:1,3'],
+            'firm'                   => ['required', Rule::in(array_keys(config('sales_form.firms')))],
             'brokerage'              => ['nullable', 'string', 'max:255'],
             'city'                   => ['nullable', 'string', 'max:255'],
             'state'                  => ['required', 'string', 'max:255'],

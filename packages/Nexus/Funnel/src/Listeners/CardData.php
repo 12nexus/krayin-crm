@@ -8,8 +8,9 @@ use Nexus\Funnel\Services\Funnel;
 /**
  * What the kanban card shows in place of the title and the price: the lead's
  * most recent meeting in the agent's own timezone (on a New Lead, when to call
- * the client back, or failing that the discovery notes), part-time or
- * full-time, and whether the lead has been checked as valid.
+ * the client back, or failing that the discovery notes), the firm the client
+ * is with, part-time or full-time, and whether the lead has been checked as
+ * valid.
  *
  * Reads the attribute values Krayin already eager-loads for the board, so the
  * only extra query per card is the meeting, and the call on a New Lead.
@@ -60,15 +61,30 @@ class CardData
             'call'       => $call,
             'notes'      => $notes,
             'engagement' => $fields['engagement_type'] ?? null,
+            'firm'       => $this->firmShort($fields['firm'] ?? null),
             'validity'   => $fields['lead_validity'] ?? null,
         ];
+    }
+
+    /**
+     * "eXp" / "RE/MAX" for the card, from the Firm's full name.
+     */
+    protected function firmShort(?string $name): ?string
+    {
+        foreach (config('sales_form.firms') as $firm) {
+            if ($firm['name'] === $name) {
+                return $firm['short'];
+            }
+        }
+
+        return $name;
     }
 
     protected function fields($lead): array
     {
         $this->codes ??= DB::table('attributes')
             ->where('entity_type', 'leads')
-            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity', 'source_notes'])
+            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity', 'source_notes', 'firm'])
             ->pluck('code', 'id')
             ->all();
 

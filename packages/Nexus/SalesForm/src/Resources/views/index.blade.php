@@ -263,6 +263,7 @@
 
                         form: {
                             user_id: @json($canReassign ? old('user_id') : null) ?? pick('user_id', @json($currentUser->id)),
+                            firm: @json(old('firm')) ?? pick('firm', ''),
                             lead_name: @json(old('lead_name')) ?? pick('lead_name', ''),
                             email: @json(old('email')) ?? pick('email', ''),
                             brokerage: @json(old('brokerage')) ?? pick('brokerage', ''),

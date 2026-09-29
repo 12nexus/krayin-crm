@@ -227,6 +227,15 @@
                                             @{{ element.user.name }}
                                         </div>
 
+                                        <!-- Firm the client is with: eXp / RE/MAX (12Nexus) -->
+                                        <div
+                                            class="rounded-xl px-2 py-1 text-xs font-medium"
+                                            :class="element.extra.firm === 'RE/MAX' ? 'bg-red-100 text-red-800' : 'bg-indigo-100 text-indigo-800'"
+                                            v-if="element.extra?.firm"
+                                        >
+                                            @{{ element.extra.firm }}
+                                        </div>
+
                                         <!-- Part-time / Full-time in place of the price (12Nexus) -->
                                         <div
                                             class="rounded-xl bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-gray-800 dark:text-white"

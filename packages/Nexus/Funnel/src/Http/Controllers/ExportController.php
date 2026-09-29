@@ -36,6 +36,7 @@ class ExportController extends Controller
             'Client'               => fn ($lead) => $lead->person_name,
             'Email'                => fn ($lead) => $lead->emails,
             'Phone'                => fn ($lead) => $lead->phones,
+            'Firm'                 => fn ($lead) => $lead->fields['firm'] ?? '',
             'Brokerage'            => fn ($lead) => $lead->fields['brokerage'] ?? '',
             'City'                 => fn ($lead) => $lead->fields['agent_city'] ?? '',
             'State / Province'     => fn ($lead) => $lead->fields['agent_state'] ?? '',
@@ -167,7 +168,7 @@ class ExportController extends Controller
             ->whereIn('av.entity_id', $leadIds)
             ->whereIn('a.code', [
                 'lead_validity', 'meeting_appeared', 'meeting_timezone', 'engagement_type',
-                'brokerage', 'agent_city', 'agent_state', 'agent_country', 'source_notes',
+                'firm', 'brokerage', 'agent_city', 'agent_state', 'agent_country', 'source_notes',
             ])
             ->get(['av.entity_id', 'a.code', 'a.type', 'o.name as option_name', 'av.text_value']);
 

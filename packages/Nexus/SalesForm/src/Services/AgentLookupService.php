@@ -107,8 +107,33 @@ class AgentLookupService
             'postal_code'      => $agent->postal_code,
             'license_details'  => $agent->comments,
             'vendor_lead_code' => $agent->vendor_lead_code,
-            'brokerage'        => config('sales_form.default_brokerage'),
+            'firm'             => $agent->firm,
+            'firm_name'        => self::firmName($agent->firm),
+            'brokerage'        => self::firmName($agent->firm),
         ];
+    }
+
+    /**
+     * The firm's display name ("eXp Realty", "RE/MAX") from its key.
+     */
+    public static function firmName(?string $firm): string
+    {
+        return (string) config('sales_form.firms.'.$firm.'.name', '');
+    }
+
+    /**
+     * Agents on file per firm, for the lookup card: firm name => count.
+     */
+    public function firmCounts(): array
+    {
+        $counts = DB::table('vicidial_agents')
+            ->select('firm', DB::raw('count(*) as total'))
+            ->groupBy('firm')
+            ->pluck('total', 'firm');
+
+        return collect(config('sales_form.firms'))
+            ->mapWithKeys(fn ($firm, $key) => [$firm['name'] => (int) ($counts[$key] ?? 0)])
+            ->all();
     }
 
     /**

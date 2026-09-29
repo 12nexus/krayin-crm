@@ -100,6 +100,7 @@ class LeadDigest
             'client_email' => $clientEmail,
             'client_phone' => $clientPhone,
 
+            'firm'        => $fields['firm'] ?? '',
             'brokerage'   => $fields['brokerage'] ?? '',
             'city'        => $fields['agent_city'] ?? '',
             'state'       => $fields['agent_state'] ?? '',

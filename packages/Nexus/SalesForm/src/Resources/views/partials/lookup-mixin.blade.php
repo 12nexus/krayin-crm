@@ -2,7 +2,7 @@
     Phone lookup behaviour shared by the sales form and the Create Lead form.
 
     The component using it must provide:
-      - data `form` holding lead_name, email, brokerage, city and state
+      - data `form` holding firm, lead_name, email, brokerage, city and state
       - optionally data `ignoreLeadId`, the lead being edited, so it is not
         reported as a duplicate of itself
 --}}
@@ -77,6 +77,22 @@
             },
 
             watch: {
+                /**
+                 * The brokerage follows the firm while it is still just a firm's
+                 * name; an office the rep typed ("RE/MAX Elite") is kept.
+                 */
+                'form.firm'(firm) {
+                    const names = {{ \Illuminate\Support\Js::from(array_map(fn ($firm) => $firm['name'], config('sales_form.firms'))) }};
+
+                    if (! firm || ! ('brokerage' in this.form)) {
+                        return;
+                    }
+
+                    if (! this.form.brokerage || Object.values(names).includes(this.form.brokerage)) {
+                        this.form.brokerage = names[firm];
+                    }
+                },
+
                 phoneInput() {
                     clearTimeout(this.debounce);
 
@@ -149,6 +165,7 @@
                  */
                 applyAgent(agent) {
                     const mapping = {
+                        firm: agent.firm,
                         lead_name: agent.full_name,
                         email: agent.email,
                         brokerage: agent.brokerage,

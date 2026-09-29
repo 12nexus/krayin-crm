@@ -24,6 +24,7 @@ class NewLeadRequest extends FormRequest
             'lead_name'       => ['required', 'string', 'max:255'],
             'email'           => ['nullable', 'email', 'max:255'],
             'note'            => ['nullable', 'string', 'max:5000'],
+            'firm'            => ['required', Rule::in(array_keys(config('sales_form.firms')))],
             'brokerage'       => ['nullable', 'string', 'max:255'],
             'city'            => ['nullable', 'string', 'max:255'],
             'state'           => ['nullable', 'string', 'max:255'],

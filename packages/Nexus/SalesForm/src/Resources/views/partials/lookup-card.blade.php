@@ -11,7 +11,8 @@
                             </p>
 
                             <span class="text-xs text-gray-400">
-                                @lang('sales_form::app.index.lookup.agents-on-file', ['count' => number_format($agentsOnFile)])
+                                {{ collect($agentsOnFile)->map(fn ($count, $firm) => number_format($count).' '.$firm)->implode(' · ') }}
+                                @lang('sales_form::app.index.lookup.agents-on-file')
                             </span>
                         </div>
 
@@ -66,7 +67,7 @@
                                 class="rounded-md border border-green-300 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950"
                             >
                                 <p class="mb-2 font-semibold text-green-800 dark:text-green-300">
-                                    ✓ @lang('sales_form::app.index.lookup.matched')
+                                    ✓ @{{ "@lang('sales_form::app.index.lookup.matched')".replace(':firm', agent.firm_name) }}
                                 </p>
 
                                 <dl class="grid grid-cols-1 gap-x-6 gap-y-1 text-gray-700 sm:grid-cols-2 dark:text-gray-300">
@@ -139,5 +140,26 @@
                                     @lang('sales_form::app.index.lookup.duplicate-help')
                                 </p>
                             </div>
+                        </div>
+
+                        <!-- Firm: set from the list the number matched in, else chosen by the rep -->
+                        <div class="mt-4">
+                            <p class="mb-2 text-xs font-medium text-gray-800 after:ml-0.5 after:text-red-500 after:content-['*'] dark:text-white">
+                                @lang('sales_form::app.index.lookup.firm')
+                                <span v-if="autofilled.firm" class="ml-1 font-normal text-green-600">(@lang('sales_form::app.index.lookup.firm-from-list'))</span>
+                            </p>
+
+                            <div class="flex flex-wrap gap-4">
+                                @foreach ($firms as $key => $firm)
+                                    <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
+                                        <input type="radio" name="firm" value="{{ $key }}" v-model="form.firm" required class="accent-[#004EF0]">
+                                        <span>{{ $firm['name'] }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            @error('firm')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>

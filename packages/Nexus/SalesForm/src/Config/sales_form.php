@@ -49,9 +49,22 @@ return [
     'close_date_offset_days' => 14,
 
     /**
-     * Every agent in the ViciDial list works for this brokerage.
+     * The firms the sales team calls agents from, each with its own ViciDial
+     * agent list (`nexus:import-vicidial <file> --firm=<key>`). `name` is the
+     * lead's Firm and the brokerage a matched agent gets; `short` labels the
+     * kanban card.
      */
-    'default_brokerage' => 'eXp Realty',
+    'firms' => [
+        'exp' => [
+            'name'  => 'eXp Realty',
+            'short' => 'eXp',
+        ],
+
+        'remax' => [
+            'name'  => 'RE/MAX',
+            'short' => 'RE/MAX',
+        ],
+    ],
 
     /**
      * Form timezone label => IANA zone, used to store the meeting at the right

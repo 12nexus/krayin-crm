@@ -226,6 +226,7 @@
 
                         form: {
                             user_id: @json($canReassign ? old('user_id', $currentUser->id) : $currentUser->id),
+                            firm: @json(old('firm', '')),
                             lead_name: @json(old('lead_name', '')),
                             email: @json(old('email', '')),
                             note: @json(old('note', '')),
