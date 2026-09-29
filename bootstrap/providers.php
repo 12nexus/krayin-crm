@@ -25,6 +25,7 @@ use Webkul\User\Providers\UserServiceProvider;
 use Webkul\Warehouse\Providers\WarehouseServiceProvider;
 use Webkul\WebForm\Providers\WebFormServiceProvider;
 use Nexus\Clients\Providers\ClientsServiceProvider;
+use Nexus\FollowUp\Providers\FollowUpServiceProvider;
 use Nexus\Funnel\Providers\FunnelServiceProvider;
 use Nexus\SalesForm\Providers\SalesFormServiceProvider;
 
@@ -71,4 +72,5 @@ return [
     SalesFormServiceProvider::class,
     FunnelServiceProvider::class,
     ClientsServiceProvider::class,
+    FollowUpServiceProvider::class,
 ];
