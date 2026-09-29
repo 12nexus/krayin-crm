@@ -83,7 +83,7 @@ class SendIntroEmail implements ShouldQueue
             'updated_at' => now(),
         ]);
 
-        $this->logOnLead($lead, $clientEmail);
+        $this->logOnLead($lead, $clientEmail, $mail->cc());
 
         Log::info('Intro email sent', ['lead_id' => $lead->id]);
     }
@@ -105,14 +105,14 @@ class SendIntroEmail implements ShouldQueue
      * A note in the lead's activity history, so the rep can see the client has
      * had the flyer.
      */
-    protected function logOnLead(Lead $lead, string $clientEmail): void
+    protected function logOnLead(Lead $lead, string $clientEmail, array $cc): void
     {
         // activities.user_id is required; an unassigned lead goes without the note.
         if (! $lead->user_id) {
             return;
         }
 
-        $cc = implode(', ', config('follow_up.cc'));
+        $cc = implode(', ', $cc);
 
         $activityId = DB::table('activities')->insertGetId([
             'title'      => 'Intro email sent',
