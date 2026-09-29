@@ -36,7 +36,7 @@ class IntroEmail extends Mailable
                     : config('follow_up.from_name_unassigned'),
             ),
             to: [new Address($this->clientEmail, $this->clientName ?: null)],
-            cc: $this->cc(),
+            cc: $this->ccList(),
             replyTo: $hasOwnerEmail ? [new Address($this->ownerEmail, $ownerName ?: null)] : [],
             subject: config('follow_up.intro.subject'),
         );
@@ -46,7 +46,7 @@ class IntroEmail extends Mailable
      * The configured CC list plus the lead owner, so the rep has the email in
      * their own inbox and knows what the client was sent.
      */
-    public function cc(): array
+    public function ccList(): array
     {
         $cc = config('follow_up.cc');
 

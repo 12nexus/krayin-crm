@@ -83,7 +83,7 @@ class SendIntroEmail implements ShouldQueue
             'updated_at' => now(),
         ]);
 
-        $this->logOnLead($lead, $clientEmail, $mail->cc());
+        $this->logOnLead($lead, $clientEmail, $mail->ccList());
 
         Log::info('Intro email sent', ['lead_id' => $lead->id]);
     }
