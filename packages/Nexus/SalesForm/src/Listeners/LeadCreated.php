@@ -26,17 +26,24 @@ class LeadCreated
     protected ?string $previousStartUtc = null;
 
     /**
+     * The event's link when the CRM has already moved it in Google Calendar.
+     */
+    protected ?string $movedEventUrl = null;
+
+    /**
      * A meeting moved to a new time: the same notification, pointing at the
      * calendar event that already exists for it.
      */
-    public function rescheduled($lead, ?string $previousStartUtc): void
+    public function rescheduled($lead, ?string $previousStartUtc, ?string $movedEventUrl = null): void
     {
         $this->previousStartUtc = $previousStartUtc;
+        $this->movedEventUrl = $movedEventUrl;
 
         try {
             $this->handle($lead, 'rescheduled');
         } finally {
             $this->previousStartUtc = null;
+            $this->movedEventUrl = null;
         }
     }
 
@@ -63,8 +70,10 @@ class LeadCreated
             $digest = $this->digest->build($lead);
             $recipients = $this->administrators();
 
+            $moved = $kind === 'rescheduled' && $this->movedEventUrl !== null;
+
             $existingEvent = $kind === 'rescheduled' && $digest['has_meeting']
-                ? $this->existingEventUrl($digest)
+                ? ($this->movedEventUrl ?? $this->existingEventUrl($digest))
                 : null;
 
             foreach ($recipients as $admin) {
@@ -81,7 +90,8 @@ class LeadCreated
                     auth()->guard('user')->user()?->name,
                 );
 
-                $mail->movesEvent = $existingEvent !== null;
+                $mail->movesEvent = $existingEvent !== null && ! $moved;
+                $mail->eventMoved = $moved;
 
                 Mail::queue($mail);
             }

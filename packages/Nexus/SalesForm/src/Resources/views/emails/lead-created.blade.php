@@ -88,11 +88,14 @@
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
           <td align="center" bgcolor="{{ $BLUE }}" style="border-radius:6px;">
             <a href="{{ $calendarUrl }}" style="display:inline-block;padding:14px 30px;font-family:{{ $FONT }};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;">
-              {{ $movesEvent ? 'Move the event in Google Calendar' : 'Add to Google Calendar' }}
+              {{ $eventMoved ? 'Open the updated event' : ($movesEvent ? 'Move the event in Google Calendar' : 'Add to Google Calendar') }}
             </a>
           </td></tr></table>
         <div style="font-family:{{ $FONT }};font-size:12px;line-height:19px;color:{{ $MUTED }};padding-top:11px;">
-          @if ($movesEvent)
+          @if ($eventMoved)
+            The event in the sales calendar has already been moved to the new time,<br>
+            and Google has sent the guests the update. Nothing to do.
+          @elseif ($movesEvent)
             Opens the meeting's existing event in the sales calendar.<br>
             Change its date and time to the new time above and save, so the guests get an update rather than a second invite.
           @else

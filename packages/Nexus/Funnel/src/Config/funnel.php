@@ -22,6 +22,12 @@ return [
     'invalidatable' => ['new', 'meeting-scheduled', 'no-show'],
 
     /**
+     * Stages offering "New meeting": the client came to their meeting and wants
+     * another. From Meeting Scheduled that first records the meeting as held.
+     */
+    'new_meeting_stages' => ['meeting-scheduled', 'follow-up'],
+
+    /**
      * Labels of the `lead_validity` select attribute.
      */
     'validity' => [

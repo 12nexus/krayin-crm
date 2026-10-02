@@ -16,6 +16,7 @@ return [
         'reschedule'        => 'Reschedule meeting',
         'move-meeting'      => 'Change meeting time',
         'follow-up-meeting' => 'Schedule another meeting',
+        'new-meeting'       => 'New meeting',
         'restore'           => 'Restore lead',
         'call'              => 'Call back',
         'no-call'           => 'No call back time set.',
@@ -34,6 +35,7 @@ return [
     'meeting-modal' => [
         'hint' => 'Enter the time in the client\'s own timezone. It is checked against every other sales meeting so two never overlap.',
         'save' => 'Save meeting',
+        'new-hint' => 'For a client who came to their meeting and wants another. The current meeting is recorded as held, and the administrators are emailed to add the new one to the calendar.',
     ],
 
     'invalid-modal' => [
@@ -50,6 +52,7 @@ return [
         'held'     => 'Meeting recorded as held. The lead is now in Follow Up.',
         'no-show'  => 'No-show recorded. The lead is now in No Show; reschedule when the client is ready.',
         'meeting'  => 'Meeting scheduled.',
+        'new-meeting' => 'Follow-up meeting booked. The administrators have been emailed to add it to the calendar.',
         'call'     => 'Call back time saved.',
     ],
 
@@ -57,6 +60,7 @@ return [
         'failed'            => 'That did not work, and nothing was changed. Please try again.',
         'not-invalidatable' => 'Only leads in New Lead, Meeting Scheduled or No Show can be marked invalid.',
         'archived'          => 'This lead is archived. Restore it before booking a meeting.',
+        'new-meeting-stage' => 'A new meeting is booked once the client has come to a meeting: from Meeting Scheduled or Follow Up.',
         'call-new-only'     => 'A call back time is only set on leads in New Lead.',
         'meeting-from-lead' => 'Meetings are booked from the lead page (Schedule / Reschedule meeting) so the client\'s timezone is recorded and clashes are checked.',
     ],

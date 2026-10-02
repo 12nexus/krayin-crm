@@ -26,15 +26,23 @@
     $call = $hasCall ? $funnel->currentCall($lead, $fields['meeting_timezone'] ?? null) : null;
     $openCall = $call && ! $call['done'];
 
+    $hasOpenMeeting = $meeting && ! $meeting['done'];
+
+    // Book the first meeting, or move the current one to a new time.
     $meetingButton = match (true) {
         $archived || in_array($stage, ['won', 'lost'], true) => null,
         // Editors book a New Lead's first meeting through the full sales form;
         // everyone else uses the meeting fields alone, which leave the lead as it is.
-        $stage === 'new'               => $canEdit ? null : trans('funnel::app.panel.schedule'),
-        $stage === 'no-show'           => trans('funnel::app.panel.reschedule'),
-        $stage === 'meeting-scheduled' => trans('funnel::app.panel.move-meeting'),
-        default                        => trans('funnel::app.panel.follow-up-meeting'),
+        $stage === 'new'                                     => $canEdit ? null : trans('funnel::app.panel.schedule'),
+        in_array($stage, ['no-show', 'meeting-scheduled'], true) => trans('funnel::app.panel.reschedule'),
+        $hasOpenMeeting                                      => trans('funnel::app.panel.reschedule'),
+        default                                              => null,
     };
+
+    // Another meeting, the client having come to theirs.
+    $newMeetingButton = ! $archived && in_array($stage, config('funnel.new_meeting_stages'), true)
+        ? trans('funnel::app.panel.new-meeting')
+        : null;
 @endphp
 
 <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
@@ -156,6 +164,18 @@
                 </button>
             @endif
 
+            @if ($canSchedule && $newMeetingButton)
+                <button
+                    type="button"
+                    @class(['primary-button' => $stage === 'follow-up', 'secondary-button' => $stage !== 'follow-up'])
+                    @click="$emitter.emit('nexus-open-meeting-modal', { mode: 'new' })"
+                >
+                    <span class="icon-add text-lg"></span>
+
+                    {{ $newMeetingButton }}
+                </button>
+            @endif
+
             @if ($canEdit && $canInvalidate)
                 <button
                     type="button"
@@ -169,7 +189,7 @@
     @endif
 </div>
 
-@if ($canSchedule && $meetingButton)
+@if ($canSchedule && ($meetingButton || $newMeetingButton))
     <v-funnel-meeting></v-funnel-meeting>
 
     @include('sales_form::partials.day-plan')
@@ -187,13 +207,15 @@
     <script type="text/x-template" id="v-funnel-meeting-template">
         <x-admin::modal ref="meetingModal">
             <x-slot:header>
-                <h3 class="text-base font-semibold dark:text-white">
-                    {{ $meetingButton }}
-                </h3>
+                <h3 class="text-base font-semibold dark:text-white" v-text="mode === 'new' ? titles.new : titles.move"></h3>
             </x-slot>
 
             <x-slot:content>
                 <form ref="form" @submit.prevent="submit" class="flex flex-col gap-3">
+                    <p v-if="mode === 'new'" class="text-sm text-gray-600 dark:text-gray-300">
+                        @lang('funnel::app.meeting-modal.new-hint')
+                    </p>
+
                     <p class="text-sm text-gray-600 dark:text-gray-300">
                         @lang('funnel::app.meeting-modal.hint')
                     </p>
@@ -320,6 +342,14 @@
 
                     meetingError: null,
 
+                    // move: book or reschedule; new: a follow-up meeting.
+                    mode: 'move',
+
+                    titles: {
+                        move: @json($meetingButton),
+                        new: @json($newMeetingButton),
+                    },
+
                     form: {
                         meeting_date: '',
                         meeting_time: '',
@@ -330,7 +360,9 @@
             },
 
             mounted() {
-                this.$emitter.on('nexus-open-meeting-modal', () => {
+                this.$emitter.on('nexus-open-meeting-modal', (options) => {
+                    this.mode = options?.mode === 'new' ? 'new' : 'move';
+
                     this.meetingError = null;
 
                     this.$refs.meetingModal.open();
@@ -346,7 +378,7 @@
                     this.submitting = true;
                     this.meetingError = null;
 
-                    this.$axios.post("{{ route('admin.leads.funnel.meeting', $lead->id) }}", this.form)
+                    this.$axios.post("{{ route('admin.leads.funnel.meeting', $lead->id) }}", { ...this.form, mode: this.mode })
                         .then(({ data }) => {
                             window.location.href = data.redirect;
                         })

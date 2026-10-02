@@ -289,7 +289,8 @@ class LeadBuilder
         foreach ($open as $meeting) {
             DB::table('activities')->where('id', $meeting->id)->update([
                 'is_done'    => 1,
-                'title'      => $meeting->title.' ('.$superseded.')',
+                // A follow-up is booked because the client came: their meeting was held.
+                'title'      => $kind === 'follow-up' ? $meeting->title : $meeting->title.' ('.$superseded.')',
                 'updated_at' => now(),
             ]);
         }

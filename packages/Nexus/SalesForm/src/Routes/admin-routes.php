@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nexus\SalesForm\Http\Controllers\GoogleCalendarController;
 use Nexus\SalesForm\Http\Controllers\SalesFormController;
 
 Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => config('app.admin_path')], function () {
@@ -25,6 +26,19 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
         Route::get('lead/{id}', 'schedule')->name('admin.sales_form.schedule');
 
         Route::post('lead/{id}', 'storeSchedule')->name('admin.sales_form.schedule.store');
+    });
+
+    /**
+     * Settings → Google Calendar: the account that moves rescheduled meetings.
+     */
+    Route::controller(GoogleCalendarController::class)->prefix('settings/google-calendar')->group(function () {
+        Route::get('', 'index')->name('admin.settings.google_calendar.index');
+
+        Route::post('connect', 'connect')->name('admin.settings.google_calendar.connect');
+
+        Route::get('callback', 'callback')->name('admin.settings.google_calendar.callback');
+
+        Route::delete('', 'disconnect')->name('admin.settings.google_calendar.disconnect');
     });
 
     /**

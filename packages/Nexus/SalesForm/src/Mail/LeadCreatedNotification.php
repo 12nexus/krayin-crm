@@ -29,6 +29,12 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
      */
     public bool $movesEvent = false;
 
+    /**
+     * Whether the CRM already moved the event in Google Calendar, $calendarUrl
+     * then being a link to the updated event.
+     */
+    public bool $eventMoved = false;
+
     public function __construct(
         public string $recipientEmail,
         public string $recipientName,
@@ -100,6 +106,7 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
                 'recipientName' => $this->recipientName,
                 'kind' => $this->kind,
                 'movesEvent' => $this->movesEvent,
+                'eventMoved' => $this->eventMoved,
                 'headline' => $this->headline(),
                 'bookedBy' => $this->bookedBy,
                 'logoPath' => dirname(__DIR__).'/Resources/assets/logo.png',

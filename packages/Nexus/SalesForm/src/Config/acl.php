@@ -14,5 +14,15 @@ return [
             'admin.sales_form.day_plan',
         ],
         'sort' => 2,
+    ], [
+        'key' => 'settings.other_settings.google_calendar',
+        'name' => 'sales_form::app.acl.google-calendar',
+        'route' => [
+            'admin.settings.google_calendar.index',
+            'admin.settings.google_calendar.connect',
+            'admin.settings.google_calendar.callback',
+            'admin.settings.google_calendar.disconnect',
+        ],
+        'sort' => 3,
     ],
 ];

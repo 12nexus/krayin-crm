@@ -88,6 +88,16 @@ return [
     ],
 
     /**
+     * The Google OAuth client (an Internal app in the 12NexusBPO Workspace) the
+     * CRM uses to move a rescheduled meeting's event in the sales calendar
+     * (notify.calendar_id). Connected under Settings → Google Calendar.
+     */
+    'google' => [
+        'client_id'     => env('GOOGLE_CALENDAR_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CALENDAR_CLIENT_SECRET'),
+    ],
+
+    /**
      * Notify administrators whenever a lead is created, wherever it came from.
      */
     'notify' => [

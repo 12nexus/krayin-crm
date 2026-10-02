@@ -2,11 +2,33 @@
 
 return [
     'menu' => [
-        'sales-form' => 'Sales Form',
+        'sales-form'           => 'Sales Form',
+        'google-calendar'      => 'Google Calendar',
+        'google-calendar-info' => 'Move rescheduled meetings in the sales calendar',
     ],
 
     'acl' => [
-        'sales-form' => 'Sales Meeting Form',
+        'sales-form'      => 'Sales Meeting Form',
+        'google-calendar' => 'Google Calendar',
+    ],
+
+    'google-calendar' => [
+        'title'            => 'Google Calendar',
+        'description'      => 'When a meeting is rescheduled, the CRM moves its event in the sales calendar and Google sends the guests the update. New meetings still come to the administrators by email, to add to the calendar.',
+        'calendar'         => 'Sales calendar',
+        'account'          => 'Connected account',
+        'not-connected'    => 'Not connected. Rescheduled meetings are emailed with a link to move the event by hand.',
+        'connect'          => 'Connect Google account',
+        'reconnect'        => 'Connect a different account',
+        'disconnect'       => 'Disconnect',
+        'connected-since'  => 'Connected :date',
+        'requirement'      => 'Connect an account that can "Make changes to events" in the sales calendar.',
+        'not-configured'   => 'The Google OAuth client is not set up yet (GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET in .env, and SALES_FORM_CALENDAR_ID).',
+        'redirect-uri'     => 'Authorized redirect URI for the OAuth client',
+        'connected'        => 'Google Calendar connected as :email.',
+        'disconnected'     => 'Google Calendar disconnected.',
+        'denied'           => 'Google access was not granted, so nothing was connected.',
+        'failed'           => 'Connecting Google Calendar did not work. Please try again.',
     ],
 
     'index' => [

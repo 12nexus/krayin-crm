@@ -2,6 +2,7 @@
 
 namespace Nexus\Funnel\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
@@ -11,6 +12,7 @@ use Nexus\Funnel\Services\Funnel;
 use Nexus\SalesForm\Http\Requests\CallRequest;
 use Nexus\SalesForm\Http\Requests\MeetingRequest;
 use Nexus\SalesForm\Listeners\LeadCreated;
+use Nexus\SalesForm\Services\GoogleCalendar;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\MeetingSlots;
 use Nexus\SalesForm\Support\LeadAccess;
@@ -26,6 +28,7 @@ class FunnelController extends Controller
         protected Funnel $funnel,
         protected LeadBuilder $leadBuilder,
         protected MeetingSlots $slots,
+        protected GoogleCalendar $calendar,
     ) {}
 
     public function valid(int $id): RedirectResponse
@@ -74,9 +77,14 @@ class FunnelController extends Controller
     }
 
     /**
-     * Book a meeting on the lead with the sales form's own meeting fields:
-     * reschedules, moved times and follow-ups. The clash check runs in the
-     * request, and again under the booking lock.
+     * Book a meeting on the lead with the sales form's own meeting fields. The
+     * clash check runs in the request, and again under the booking lock.
+     *
+     *  - New Lead: the first (discovery) meeting.
+     *  - mode=new: a follow-up meeting, the client having come to theirs. From
+     *    Meeting Scheduled the current meeting is recorded as held first.
+     *  - Otherwise a reschedule: the open meeting moves to the new time (after a
+     *    no-show, a new one is booked), and so does its Google Calendar event.
      */
     public function meeting(MeetingRequest $request, int $id): JsonResponse
     {
@@ -86,31 +94,85 @@ class FunnelController extends Controller
             abort(422, trans('funnel::app.errors.archived'));
         }
 
-        $kind = match ($this->funnel->stageCode($lead)) {
-            'new'       => 'discovery',
-            'follow-up' => 'follow-up',
-            default     => 'rescheduled',
+        $stage = $this->funnel->stageCode($lead);
+        $newMeeting = $request->input('mode') === 'new';
+
+        if ($newMeeting && ! in_array($stage, config('funnel.new_meeting_stages'), true)) {
+            abort(422, trans('funnel::app.errors.new-meeting-stage'));
+        }
+
+        $kind = match (true) {
+            $newMeeting       => 'follow-up',
+            $stage === 'new'  => 'discovery',
+            default           => 'rescheduled',
         };
 
-        // Where the meeting was, so the email can point at that calendar event.
-        $previousStart = $kind === 'rescheduled' ? $this->latestMeetingStart($lead) : null;
+        // The meeting as it was, to find its calendar event.
+        $previous = $kind === 'rescheduled' ? $this->latestMeeting($lead) : null;
 
-        $lead = $this->slots->locked(fn () => DB::transaction(
-            fn () => $this->leadBuilder->scheduleMeeting($lead, $request->validated(), $this->user(), $kind)
-        ));
+        $lead = $this->slots->locked(fn () => DB::transaction(function () use ($lead, $request, $kind, $stage) {
+            if ($kind === 'follow-up' && $stage === 'meeting-scheduled') {
+                $this->funnel->meetingHeld($lead, $this->user());
+
+                $lead->refresh()->load('stage');
+            }
+
+            return $this->leadBuilder->scheduleMeeting($lead, $request->validated(), $this->user(), $kind);
+        }));
 
         match ($kind) {
             'discovery' => app(LeadCreated::class)->handle($lead, 'meeting'),
             'follow-up' => app(LeadCreated::class)->handle($lead, 'follow-up'),
-            default     => app(LeadCreated::class)->rescheduled($lead, $previousStart),
+            default     => app(LeadCreated::class)->rescheduled(
+                $lead,
+                $previous?->schedule_from,
+                $previous ? $this->moveCalendarEvent($lead, $previous, $request->validated()) : null,
+            ),
         };
 
-        session()->flash('success', trans('funnel::app.flash.meeting'));
+        session()->flash('success', trans('funnel::app.flash.'.($kind === 'follow-up' ? 'new-meeting' : 'meeting')));
 
         return new JsonResponse([
             'message'  => trans('funnel::app.flash.meeting'),
             'redirect' => route('admin.leads.view', $lead->id),
         ]);
+    }
+
+    /**
+     * Give the meeting's Google Calendar event its new time. Returns the event's
+     * link, or null if it was not moved (not connected, not found, or Google
+     * refused), in which case the email asks for it to be moved by hand.
+     */
+    protected function moveCalendarEvent(Lead $lead, object $previous, array $input): ?string
+    {
+        if (! $previous->schedule_from) {
+            return null;
+        }
+
+        $current = $this->latestMeeting($lead);
+
+        if (! $current || $current->is_done || ! $current->schedule_from) {
+            return null;
+        }
+
+        try {
+            return $this->calendar->moveMeeting(
+                (int) $previous->id,
+                (int) $current->id,
+                Carbon::parse($previous->schedule_from, 'UTC'),
+                Carbon::parse($current->schedule_from, 'UTC'),
+                Carbon::parse($current->schedule_to ?? $current->schedule_from, 'UTC'),
+                config('sales_form.timezones')[$input['timezone']] ?? config('app.timezone', 'UTC'),
+                $lead->person?->name,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Could not move the meeting in Google Calendar', [
+                'lead_id' => $lead->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -172,16 +234,18 @@ class FunnelController extends Controller
         return LeadAccess::findOrFail($id);
     }
 
-    protected function latestMeetingStart(Lead $lead): ?string
+    /**
+     * The lead's meeting that counts: an open one, else the last one booked.
+     */
+    protected function latestMeeting(Lead $lead): ?object
     {
         return DB::table('activities')
             ->join('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
             ->where('lead_activities.lead_id', $lead->id)
             ->where('activities.type', 'meeting')
-            ->whereNotNull('activities.schedule_from')
             ->orderBy('activities.is_done')
             ->orderByDesc('activities.id')
-            ->value('activities.schedule_from');
+            ->first(['activities.id', 'activities.schedule_from', 'activities.schedule_to', 'activities.is_done']);
     }
 
     protected function user()
