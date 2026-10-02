@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -96,13 +97,7 @@ class GoogleCalendar
         $email = Http::withToken($tokens['access_token'])->timeout(15)
             ->get(self::USERINFO_URL)->throw()->json('email');
 
-        // Writing needs at least "Make changes to events" on the sales calendar.
-        $access = Http::withToken($tokens['access_token'])->timeout(15)
-            ->get(self::API.'/users/me/calendarList/'.rawurlencode($this->calendarId()));
-
-        if (! $access->successful() || ! in_array($access->json('accessRole'), ['writer', 'owner'], true)) {
-            throw new RuntimeException("{$email} cannot make changes to events in the sales calendar. Connect an account that can, or share the calendar with it first.");
-        }
+        $this->assertCanWrite($tokens['access_token'], $email);
 
         DB::transaction(function () use ($tokens, $email, $userId) {
             DB::table('nexus_google_calendar_accounts')->delete();
@@ -119,6 +114,47 @@ class GoogleCalendar
         });
 
         return $email;
+    }
+
+    /**
+     * Writing needs at least "Make changes to events" on the sales calendar.
+     * Checked through the calendar's event list, whose accessRole is the
+     * account's own; the calendar list would need a wider scope than
+     * calendar.events, and only holds calendars the account has added.
+     */
+    protected function assertCanWrite(string $accessToken, ?string $email): void
+    {
+        $response = Http::withToken($accessToken)->timeout(15)->acceptJson()
+            ->get(self::API.'/calendars/'.rawurlencode($this->calendarId()).'/events', ['maxResults' => 1]);
+
+        if (! $response->successful()) {
+            $reason = $response->json('error.errors.0.reason') ?? $response->json('error.status');
+
+            Log::warning('Google Calendar access check failed', [
+                'email'   => $email,
+                'status'  => $response->status(),
+                'reason'  => $reason,
+                'message' => $response->json('error.message'),
+            ]);
+
+            if (in_array($reason, ['accessNotConfigured', 'SERVICE_DISABLED'], true)) {
+                throw new RuntimeException('The Google Calendar API is not enabled for this OAuth client\'s Cloud project. Enable it under APIs & Services, then connect again.');
+            }
+
+            if ($response->status() === 404) {
+                throw new RuntimeException("{$email} cannot see the sales calendar. Share it with this account (\"Make changes to events\"), then connect again.");
+            }
+
+            throw new RuntimeException('Google refused access to the sales calendar ('.($response->json('error.message') ?: $response->status()).').');
+        }
+
+        $role = $response->json('accessRole');
+
+        if (! in_array($role, ['writer', 'owner'], true)) {
+            Log::warning('Google Calendar account cannot write', ['email' => $email, 'access_role' => $role]);
+
+            throw new RuntimeException("{$email} can only see the sales calendar ({$role}), not make changes to events. Give it \"Make changes to events\", or connect an account that has it.");
+        }
     }
 
     public function disconnect(): void
