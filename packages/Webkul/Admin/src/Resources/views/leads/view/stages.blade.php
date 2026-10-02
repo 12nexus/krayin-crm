@@ -11,9 +11,10 @@
 @pushOnce('scripts')
     <script type="text/x-template" id="v-lead-stages-template">
         <!-- Stages Container -->
+        <!-- 12Nexus: the stage bar is read-only without leads.edit -->
         <div
             class="flex w-full max-w-full"
-            :class="{'opacity-50 pointer-events-none': isUpdating}"
+            :class="{'opacity-50 pointer-events-none': isUpdating, 'pointer-events-none': ! canEdit}"
         >
             <!-- Stages Item -->
             <template v-for="stage in stages">
@@ -184,6 +185,8 @@
                 return {
                     isUpdating: false,
 
+                    canEdit: @json(bouncer()->hasPermission('leads.edit')),
+
                     currentStage: @json($lead->stage),
 
                     nextStage: null,
@@ -196,7 +199,7 @@
 
             methods: {
                 openModal(stage) {
-                    if (this.currentStage.code == stage.code) {
+                    if (! this.canEdit || this.currentStage.code == stage.code) {
                         return;
                     }
 
@@ -224,7 +227,7 @@
                 },
 
                 update(stage, params = null) {
-                    if (this.currentStage.code == stage.code) {
+                    if (! this.canEdit || this.currentStage.code == stage.code) {
                         return;
                     }
 

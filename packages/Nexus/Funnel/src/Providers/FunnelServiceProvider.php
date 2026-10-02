@@ -4,6 +4,7 @@ namespace Nexus\Funnel\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Nexus\Funnel\Http\Middleware\LeadEditGuard;
 use Nexus\Funnel\Listeners\BoardOrder;
 use Nexus\Funnel\Listeners\CardData;
 use Nexus\Funnel\Listeners\MeetingGuard;
@@ -22,6 +23,11 @@ class FunnelServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../Routes/admin-routes.php');
+
+        /**
+         * Changing a lead anywhere needs leads.edit, not just on the edit form.
+         */
+        $this->app['router']->pushMiddlewareToGroup('web', LeadEditGuard::class);
 
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
 

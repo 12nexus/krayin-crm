@@ -85,6 +85,7 @@
                             :list="stage.leads.data"
                             item-key="id"
                             group="leads"
+                            :disabled="{{ bouncer()->hasPermission('leads.edit') ? 'false' : 'true' }}"
                             @scroll="handleScroll(stage, $event)"
                             @change="handleUpdate(stage, $event)"
                         >

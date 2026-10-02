@@ -99,6 +99,69 @@ class CalendarFeed
     }
 
     /**
+     * Google Calendar's edit page for the event starting at $startUtc, preferring
+     * one whose title names the client, or null if there is none. The sales
+     * calendar's id (sales_form.notify.calendar_id) is needed to address it.
+     */
+    public function editUrl(Carbon $startUtc, ?string $clientName = null): ?string
+    {
+        $calendarId = config('sales_form.notify.calendar_id');
+
+        if (! $this->configured() || ! $calendarId) {
+            return null;
+        }
+
+        [$ics] = $this->ics();
+
+        $calendar = Reader::read($ics, Reader::OPTION_FORGIVING);
+
+        if (! $calendar instanceof VCalendar) {
+            return null;
+        }
+
+        $name = mb_strtolower(trim((string) $clientName));
+        $matches = [];
+
+        foreach ($calendar->select('VEVENT') as $event) {
+            if (! $event->DTSTART->hasTime() || isset($event->RRULE) || isset($event->{'RECURRENCE-ID'})) {
+                continue;
+            }
+
+            if (strtoupper((string) $event->STATUS) === 'CANCELLED') {
+                continue;
+            }
+
+            $start = Carbon::instance($event->DTSTART->getDateTime())->utc();
+
+            if ($start->format('Y-m-d H:i') !== $startUtc->copy()->utc()->format('Y-m-d H:i')) {
+                continue;
+            }
+
+            $uid = (string) $event->UID;
+
+            if (! str_ends_with($uid, '@google.com')) {
+                continue;
+            }
+
+            $named = $name !== '' && str_contains(mb_strtolower((string) $event->SUMMARY), $name);
+
+            $matches[] = ['id' => substr($uid, 0, -strlen('@google.com')), 'named' => $named];
+        }
+
+        $named = array_values(array_filter($matches, fn ($match) => $match['named']));
+
+        // Another client's meeting at the same time is not this one.
+        $match = $named[0] ?? (count($matches) === 1 && $name === '' ? $matches[0] : null);
+
+        if (! $match) {
+            return null;
+        }
+
+        return 'https://calendar.google.com/calendar/r/eventedit/'
+            .rtrim(base64_encode($match['id'].' '.$calendarId), '=');
+    }
+
+    /**
      * The raw feed: fresh from cache, else from Google, else the last good copy.
      *
      * @return array{0: string, 1: bool} the ICS text and whether it is stale

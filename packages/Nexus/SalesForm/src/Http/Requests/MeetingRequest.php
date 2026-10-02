@@ -13,7 +13,7 @@ class MeetingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return bouncer()->hasPermission('leads.edit');
+        return bouncer()->hasPermission('activities.create');
     }
 
     public function rules(): array

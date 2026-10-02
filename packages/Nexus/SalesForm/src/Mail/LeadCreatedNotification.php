@@ -22,6 +22,13 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
 
     public $backoff = 60;
 
+    /**
+     * Whether $calendarUrl opens the meeting's existing Google Calendar event to
+     * be moved, rather than composing a new one. A plain property, not a
+     * constructor one, so mail already queued before it existed still sends.
+     */
+    public bool $movesEvent = false;
+
     public function __construct(
         public string $recipientEmail,
         public string $recipientName,
@@ -92,6 +99,7 @@ class LeadCreatedNotification extends Mailable implements ShouldQueue
                 'calendarUrl' => $this->calendarUrl,
                 'recipientName' => $this->recipientName,
                 'kind' => $this->kind,
+                'movesEvent' => $this->movesEvent,
                 'headline' => $this->headline(),
                 'bookedBy' => $this->bookedBy,
                 'logoPath' => dirname(__DIR__).'/Resources/assets/logo.png',

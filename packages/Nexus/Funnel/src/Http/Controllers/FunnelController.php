@@ -80,7 +80,7 @@ class FunnelController extends Controller
      */
     public function meeting(MeetingRequest $request, int $id): JsonResponse
     {
-        $lead = $this->lead($id);
+        $lead = $this->lead($id, 'activities.create');
 
         if ($this->funnel->isArchived($lead)) {
             abort(422, trans('funnel::app.errors.archived'));
@@ -92,15 +92,18 @@ class FunnelController extends Controller
             default     => 'rescheduled',
         };
 
+        // Where the meeting was, so the email can point at that calendar event.
+        $previousStart = $kind === 'rescheduled' ? $this->latestMeetingStart($lead) : null;
+
         $lead = $this->slots->locked(fn () => DB::transaction(
             fn () => $this->leadBuilder->scheduleMeeting($lead, $request->validated(), $this->user(), $kind)
         ));
 
-        app(LeadCreated::class)->handle($lead, match ($kind) {
-            'discovery' => 'meeting',
-            'follow-up' => 'follow-up',
-            default     => 'rescheduled',
-        });
+        match ($kind) {
+            'discovery' => app(LeadCreated::class)->handle($lead, 'meeting'),
+            'follow-up' => app(LeadCreated::class)->handle($lead, 'follow-up'),
+            default     => app(LeadCreated::class)->rescheduled($lead, $previousStart),
+        };
 
         session()->flash('success', trans('funnel::app.flash.meeting'));
 
@@ -116,7 +119,7 @@ class FunnelController extends Controller
      */
     public function call(CallRequest $request, int $id): JsonResponse
     {
-        $lead = $this->lead($id);
+        $lead = $this->lead($id, 'activities.create');
 
         if ($this->funnel->stageCode($lead) !== 'new' || $this->funnel->isArchived($lead)) {
             abort(422, trans('funnel::app.errors.call-new-only'));
@@ -158,11 +161,27 @@ class FunnelController extends Controller
             ->with('success', trans('funnel::app.flash.'.$flash));
     }
 
-    protected function lead(int $id): Lead
+    /**
+     * Booking a meeting or a call back is logging an activity, open to anyone who
+     * may create activities; every other move changes the lead and needs leads.edit.
+     */
+    protected function lead(int $id, string $permission = 'leads.edit'): Lead
     {
-        abort_unless(bouncer()->hasPermission('leads.edit'), 401);
+        abort_unless(bouncer()->hasPermission($permission), 401);
 
         return LeadAccess::findOrFail($id);
+    }
+
+    protected function latestMeetingStart(Lead $lead): ?string
+    {
+        return DB::table('activities')
+            ->join('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
+            ->where('lead_activities.lead_id', $lead->id)
+            ->where('activities.type', 'meeting')
+            ->whereNotNull('activities.schedule_from')
+            ->orderBy('activities.is_done')
+            ->orderByDesc('activities.id')
+            ->value('activities.schedule_from');
     }
 
     protected function user()

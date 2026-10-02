@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Nexus\SalesForm\Mail\LeadCreatedNotification;
+use Nexus\SalesForm\Services\CalendarFeed;
 use Nexus\SalesForm\Services\CalendarLink;
 use Nexus\SalesForm\Services\ClientInvite;
 use Nexus\SalesForm\Services\LeadDigest;
@@ -17,6 +18,27 @@ class LeadCreated
         protected LeadDigest $digest,
         protected CalendarLink $calendar,
     ) {}
+
+    /**
+     * When the time it had before a reschedule (UTC), so the email can open that
+     * event in the shared calendar to be moved instead of adding a second one.
+     */
+    protected ?string $previousStartUtc = null;
+
+    /**
+     * A meeting moved to a new time: the same notification, pointing at the
+     * calendar event that already exists for it.
+     */
+    public function rescheduled($lead, ?string $previousStartUtc): void
+    {
+        $this->previousStartUtc = $previousStartUtc;
+
+        try {
+            $this->handle($lead, 'rescheduled');
+        } finally {
+            $this->previousStartUtc = null;
+        }
+    }
 
     /**
      * Notify every administrator that a lead has landed, with a one-click Google
@@ -41,19 +63,27 @@ class LeadCreated
             $digest = $this->digest->build($lead);
             $recipients = $this->administrators();
 
-            foreach ($recipients as $admin) {
-                $calendarUrl = $digest['has_meeting']
-                    ? $this->calendarUrl($digest, $admin['email'])
-                    : null;
+            $existingEvent = $kind === 'rescheduled' && $digest['has_meeting']
+                ? $this->existingEventUrl($digest)
+                : null;
 
-                Mail::queue(new LeadCreatedNotification(
+            foreach ($recipients as $admin) {
+                $calendarUrl = $existingEvent ?? ($digest['has_meeting']
+                    ? $this->calendarUrl($digest, $admin['email'])
+                    : null);
+
+                $mail = new LeadCreatedNotification(
                     $admin['email'],
                     $admin['name'],
                     $digest,
                     $calendarUrl,
                     $kind,
                     auth()->guard('user')->user()?->name,
-                ));
+                );
+
+                $mail->movesEvent = $existingEvent !== null;
+
+                Mail::queue($mail);
             }
 
             Log::info('Lead notification queued', [
@@ -100,6 +130,32 @@ class LeadCreated
         }
 
         return $admins ?: $fallback;
+    }
+
+    /**
+     * The edit page of the event already in the shared sales calendar at the
+     * meeting's old time, or null when it cannot be found (not added yet, the
+     * feed is down), in which case the email falls back to a new-event link.
+     */
+    protected function existingEventUrl(array $digest): ?string
+    {
+        if (! $this->previousStartUtc) {
+            return null;
+        }
+
+        try {
+            return app(CalendarFeed::class)->editUrl(
+                Carbon::parse($this->previousStartUtc, 'UTC'),
+                $digest['client_name'] ?? null,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Could not look up the rescheduled meeting in the sales calendar', [
+                'lead_id' => $digest['id'] ?? null,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     protected function calendarUrl(array $digest, string $adminEmail): string

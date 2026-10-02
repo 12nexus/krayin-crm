@@ -9,7 +9,7 @@
 
     Rendered inside a Vue template, so `activity` is in scope at runtime.
 --}}
-@if (request()->routeIs('admin.leads.view') && bouncer()->hasPermission('leads.edit'))
+@if (request()->routeIs('admin.leads.view') && bouncer()->hasPermission('activities.create'))
     <x-admin::dropdown.menu.item
         v-if="activity.type === 'meeting' && ! activity.is_done"
         @click="$emitter.emit('nexus-open-meeting-modal')"

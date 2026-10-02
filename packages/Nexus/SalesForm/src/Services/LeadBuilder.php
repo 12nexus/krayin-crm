@@ -276,7 +276,15 @@ class LeadBuilder
             ->where('lead_activities.lead_id', $lead->id)
             ->where('activities.type', 'meeting')
             ->where('activities.is_done', 0)
+            ->orderByDesc('activities.id')
             ->get(['activities.id', 'activities.title']);
+
+        /**
+         * Moving a meeting that is still open changes that meeting's time: same
+         * activity, same calendar entry. Only a meeting that is already over (a
+         * no-show, or one held before a follow-up) gives way to a new one.
+         */
+        $moving = $kind === 'rescheduled' ? $open->shift() : null;
 
         foreach ($open as $meeting) {
             DB::table('activities')->where('id', $meeting->id)->update([
@@ -286,23 +294,27 @@ class LeadBuilder
             ]);
         }
 
-        $name = $lead->person?->name ?: 'Lead';
+        if ($moving) {
+            $this->moveMeeting($lead, $moving->id, $input, $by);
+        } else {
+            $name = $lead->person?->name ?: 'Lead';
 
-        $title = match ($kind) {
-            'discovery' => sprintf('Discovery meeting — %s', $name),
-            'follow-up' => sprintf('Follow-up meeting — %s', $name),
-            default     => sprintf('Rescheduled meeting — %s', $name),
-        };
+            $title = match ($kind) {
+                'discovery' => sprintf('Discovery meeting — %s', $name),
+                'follow-up' => sprintf('Follow-up meeting — %s', $name),
+                default     => sprintf('Rescheduled meeting — %s', $name),
+            };
 
-        $context = match ($kind) {
-            'discovery' => 'Discovery call booked on an existing lead.',
-            'follow-up' => 'Follow-up meeting booked.',
-            default     => $previousStage === 'no-show'
-                ? 'Rescheduled after the client did not show up.'
-                : 'Meeting moved to a new time.',
-        };
+            $context = match ($kind) {
+                'discovery' => 'Discovery call booked on an existing lead.',
+                'follow-up' => 'Follow-up meeting booked.',
+                default     => $previousStage === 'no-show'
+                    ? 'Rescheduled after the client did not show up.'
+                    : 'Meeting moved to a new time.',
+            };
 
-        $this->addMeeting($lead, $lead->person_id, $input, $by, $title, $context);
+            $this->addMeeting($lead, $lead->person_id, $input, $by, $title, $context);
+        }
 
         // The call back on a New Lead has done its job once the meeting is booked.
         if ($previousStage === 'new') {
@@ -713,6 +725,49 @@ class LeadBuilder
         ]);
 
         $this->attach($meeting->id, $lead->id, $personId);
+
+        $this->fields->set($lead->id, [
+            'meeting_at'       => $meetingLocal->format('Y-m-d H:i:s'),
+            'meeting_timezone' => $input['timezone'],
+        ]);
+    }
+
+    /**
+     * Give an open meeting a new time in place, noting the move in its comment.
+     * The clash check skips the meeting itself, so it can move within its own slot.
+     */
+    protected function moveMeeting(Lead $lead, int $activityId, array $input, User $by): void
+    {
+        $meetingLocal = $this->meetingLocal($input);
+        $meetingUtc = $this->toUtc($meetingLocal, $input['timezone']);
+        $meetingEnd = $meetingUtc->copy()->addMinutes((int) config('sales_form.notify.meeting_minutes'));
+        $additional = trim((string) ($input['additional_information'] ?? ''));
+
+        $this->slots->assertFree(
+            $meetingUtc,
+            $meetingEnd,
+            config('sales_form.timezones')[$input['timezone']] ?? null,
+            [$activityId]
+        );
+
+        $meeting = DB::table('activities')->where('id', $activityId)->first(['schedule_from', 'comment']);
+
+        DB::table('activities')->where('id', $activityId)->update([
+            'schedule_from' => $meetingUtc->format('Y-m-d H:i:s'),
+            'schedule_to'   => $meetingEnd->format('Y-m-d H:i:s'),
+            'comment'       => trim((string) $meeting->comment)."\n\n".sprintf(
+                "Rescheduled by %s on %s UTC.\nWas (UTC): %s.\nNow agent local time: %s %s (%s).\nStored in UTC: %s.%s",
+                $by->name,
+                now('UTC')->format('Y-m-d H:i'),
+                $meeting->schedule_from,
+                $meetingLocal->format('Y-m-d'),
+                $meetingLocal->format('g:i A'),
+                $input['timezone'],
+                $meetingUtc->format('Y-m-d H:i:s'),
+                $additional !== '' ? "\nNote: ".$additional : ''
+            ),
+            'updated_at'    => now(),
+        ]);
 
         $this->fields->set($lead->id, [
             'meeting_at'       => $meetingLocal->format('Y-m-d H:i:s'),

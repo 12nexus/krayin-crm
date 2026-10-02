@@ -112,10 +112,11 @@
                 :endpoint="route('admin.leads.activities.index', $lead->id)"
                 :email-detach-endpoint="route('admin.leads.emails.detach', $lead->id)"
                 :activeType="request()->query('tab') ?? (request()->query('from') === 'quotes' ? 'quotes' : 'all')"
-                :extra-types="[
+                :extra-types="array_values(array_filter([
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
-                    ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
-                ]"
+                    // 12Nexus: the products tab only edits, so it needs leads.edit.
+                    bouncer()->hasPermission('leads.edit') ? ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')] : null,
+                ]))"
             >
                 <!-- Products -->
                 <x-slot:products>

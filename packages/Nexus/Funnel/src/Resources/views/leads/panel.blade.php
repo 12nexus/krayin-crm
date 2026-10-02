@@ -15,7 +15,10 @@
     $isValid = $validity === config('funnel.validity.valid');
     $appeared = $fields['meeting_appeared'] ?? null;
 
+    // Editing the lead (validity, held, no-show, invalid, restore) needs
+    // leads.edit; booking a meeting or a call back is logging an activity.
     $canEdit = bouncer()->hasPermission('leads.edit');
+    $canSchedule = bouncer()->hasPermission('activities.create');
     $canInvalidate = ! $archived && in_array($stage, config('funnel.invalidatable'), true);
 
     // New Lead: when to call the client back.
@@ -24,7 +27,10 @@
     $openCall = $call && ! $call['done'];
 
     $meetingButton = match (true) {
-        $archived || in_array($stage, ['won', 'lost', 'new'], true) => null,
+        $archived || in_array($stage, ['won', 'lost'], true) => null,
+        // Editors book a New Lead's first meeting through the full sales form;
+        // everyone else uses the meeting fields alone, which leave the lead as it is.
+        $stage === 'new'               => $canEdit ? null : trans('funnel::app.panel.schedule'),
         $stage === 'no-show'           => trans('funnel::app.panel.reschedule'),
         $stage === 'meeting-scheduled' => trans('funnel::app.panel.move-meeting'),
         default                        => trans('funnel::app.panel.follow-up-meeting'),
@@ -94,22 +100,22 @@
         </div>
     @endif
 
-    @if ($canEdit)
+    @if ($canEdit || $canSchedule)
         <div class="flex flex-wrap gap-2 pt-1">
-            @if ($archived)
+            @if ($canEdit && $archived)
                 <form method="POST" action="{{ route('admin.leads.funnel.restore', $lead->id) }}">
                     @csrf
                     <button type="submit" class="secondary-button">@lang('funnel::app.panel.restore')</button>
                 </form>
             @endif
 
-            @if ($stage === 'new' && ! $archived && bouncer()->hasPermission('sales_form'))
+            @if ($canEdit && $stage === 'new' && ! $archived && bouncer()->hasPermission('sales_form'))
                 <a href="{{ route('admin.sales_form.schedule', $lead->id) }}" class="primary-button">
                     @lang('funnel::app.panel.schedule')
                 </a>
             @endif
 
-            @if ($hasCall)
+            @if ($canSchedule && $hasCall)
                 <button
                     type="button"
                     class="secondary-button"
@@ -121,7 +127,7 @@
                 </button>
             @endif
 
-            @if ($stage === 'meeting-scheduled' && ! $archived)
+            @if ($canEdit && $stage === 'meeting-scheduled' && ! $archived)
                 @unless ($isValid)
                     <form method="POST" action="{{ route('admin.leads.funnel.valid', $lead->id) }}">
                         @csrf
@@ -140,7 +146,7 @@
                 </form>
             @endif
 
-            @if ($meetingButton)
+            @if ($canSchedule && $meetingButton)
                 <button
                     type="button"
                     @class(['primary-button' => $stage === 'no-show', 'secondary-button' => $stage !== 'no-show'])
@@ -150,7 +156,7 @@
                 </button>
             @endif
 
-            @if ($canInvalidate)
+            @if ($canEdit && $canInvalidate)
                 <button
                     type="button"
                     class="secondary-button !border-red-500 !text-red-600"
@@ -163,7 +169,7 @@
     @endif
 </div>
 
-@if ($canEdit && $meetingButton)
+@if ($canSchedule && $meetingButton)
     <v-funnel-meeting></v-funnel-meeting>
 
     @include('sales_form::partials.day-plan')
@@ -173,7 +179,7 @@
     <v-funnel-invalid></v-funnel-invalid>
 @endif
 
-@if ($canEdit && $hasCall)
+@if ($canSchedule && $hasCall)
     <v-funnel-call></v-funnel-call>
 @endif
 
