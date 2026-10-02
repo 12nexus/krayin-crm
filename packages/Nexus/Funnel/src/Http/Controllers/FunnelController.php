@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Nexus\Funnel\Services\Funnel;
 use Nexus\SalesForm\Http\Requests\CallRequest;
 use Nexus\SalesForm\Http\Requests\MeetingRequest;
@@ -90,15 +91,16 @@ class FunnelController extends Controller
     {
         $lead = $this->lead($id, 'activities.create');
 
+        // Refused as validation errors: Krayin shows any other 422 as a bare 500.
         if ($this->funnel->isArchived($lead)) {
-            abort(422, trans('funnel::app.errors.archived'));
+            throw ValidationException::withMessages(['meeting_date' => trans('funnel::app.errors.archived')]);
         }
 
         $stage = $this->funnel->stageCode($lead);
         $newMeeting = $request->input('mode') === 'new';
 
         if ($newMeeting && ! in_array($stage, config('funnel.new_meeting_stages'), true)) {
-            abort(422, trans('funnel::app.errors.new-meeting-stage'));
+            throw ValidationException::withMessages(['meeting_date' => trans('funnel::app.errors.new-meeting-stage')]);
         }
 
         $kind = match (true) {
