@@ -4,6 +4,7 @@ namespace Nexus\SalesForm\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Nexus\SalesForm\Services\AgentLookupService;
 
 /**
  * The quick "Create Lead" form: phone and name identify the client, the sales
@@ -24,8 +25,8 @@ class NewLeadRequest extends FormRequest
             'lead_name'       => ['required', 'string', 'max:255'],
             'email'           => ['nullable', 'email', 'max:255'],
             'note'            => ['nullable', 'string', 'max:5000'],
-            'firm'            => ['required', Rule::in(array_keys(config('sales_form.firms')))],
-            'brokerage'       => ['nullable', 'string', 'max:255'],
+            'firm'            => ['required', Rule::in(array_keys(AgentLookupService::firmOptions()))],
+            'brokerage'       => ['required_if:firm,'.config('sales_form.other_firm.key'), 'nullable', 'string', 'max:255'],
             'city'            => ['nullable', 'string', 'max:255'],
             'state'           => ['nullable', 'string', 'max:255'],
             'engagement_type' => ['nullable', Rule::in(config('sales_form.engagement_types'))],
@@ -50,6 +51,7 @@ class NewLeadRequest extends FormRequest
     {
         return [
             'lead_value.min' => 'The estimated monthly value cannot be below the $:min retainer.',
+            'brokerage.required_if' => 'Type the name of the brokerage.',
         ];
     }
 

@@ -142,7 +142,7 @@
                             </div>
                         </div>
 
-                        <!-- Firm: set from the list the number matched in, else chosen by the rep -->
+                        <!-- Brokerage: eXp Realty / RE/MAX (set from the list the number matched in), or Other with its name typed in -->
                         <div class="mt-4">
                             <p class="mb-2 text-xs font-medium text-gray-800 after:ml-0.5 after:text-red-500 after:content-['*'] dark:text-white">
                                 @lang('sales_form::app.index.lookup.firm')
@@ -159,6 +159,22 @@
                             </div>
 
                             @error('firm')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+
+                            <div v-if="form.firm === '{{ config('sales_form.other_firm.key') }}'" class="mt-3 max-w-sm">
+                                <label class="mb-1 block text-xs font-medium text-gray-800 after:ml-0.5 after:text-red-500 after:content-['*'] dark:text-white">
+                                    @lang('sales_form::app.index.lookup.other-brokerage')
+                                </label>
+
+                                <input type="text" name="brokerage" v-model="form.brokerage" required maxlength="255"
+                                    placeholder="@lang('sales_form::app.index.lookup.other-brokerage-placeholder')"
+                                    class="w-full rounded border border-gray-300 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                            </div>
+
+                            <input v-else type="hidden" name="brokerage" :value="form.brokerage">
+
+                            @error('brokerage')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

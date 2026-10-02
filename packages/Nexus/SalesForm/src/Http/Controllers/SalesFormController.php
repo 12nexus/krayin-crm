@@ -66,7 +66,7 @@ class SalesFormController extends Controller
                 'user_id'          => $lead->user_id,
                 'lead_name'        => $person?->name ?? '',
                 'email'            => collect($person?->emails ?? [])->pluck('value')->filter()->first() ?? '',
-                'firm'             => collect(config('sales_form.firms'))->search(fn ($firm) => $firm['name'] === ($fields['firm'] ?? null)) ?: '',
+                'firm'             => collect(AgentLookupService::firmOptions())->search(fn ($firm) => $firm['name'] === ($fields['firm'] ?? null)) ?: '',
                 'brokerage'        => $fields['brokerage'] ?? '',
                 'experience_years' => $fields['experience_years'] ?? '',
                 'city'             => $fields['agent_city'] ?? '',
@@ -166,7 +166,7 @@ class SalesFormController extends Controller
             'engagementTypes' => config('sales_form.engagement_types'),
             'minimumValue'    => (float) config('sales_form.minimum_lead_value'),
             'agentsOnFile'    => $this->lookup->firmCounts(),
-            'firms'           => config('sales_form.firms'),
+            'firms'           => AgentLookupService::firmOptions(),
             'lead'            => null,
             'prefill'         => [],
         ];

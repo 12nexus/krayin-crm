@@ -231,7 +231,7 @@
                                         <!-- Firm the client is with: eXp / RE/MAX (12Nexus) -->
                                         <div
                                             class="rounded-xl px-2 py-1 text-xs font-medium"
-                                            :class="element.extra.firm === 'RE/MAX' ? 'bg-red-100 text-red-800' : 'bg-indigo-100 text-indigo-800'"
+                                            :class="element.extra.firm === 'RE/MAX' ? 'bg-red-100 text-red-800' : (element.extra.firm === 'eXp' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800')"
                                             v-if="element.extra?.firm"
                                         >
                                             @{{ element.extra.firm }}

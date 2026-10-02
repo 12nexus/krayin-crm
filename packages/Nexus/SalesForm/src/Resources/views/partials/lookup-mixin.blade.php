@@ -78,8 +78,8 @@
 
             watch: {
                 /**
-                 * The brokerage follows the firm while it is still just a firm's
-                 * name; an office the rep typed ("RE/MAX Elite") is kept.
+                 * eXp Realty and RE/MAX are the brokerage. Other asks for the
+                 * brokerage's name: it starts empty rather than holding a firm's.
                  */
                 'form.firm'(firm) {
                     const names = {{ \Illuminate\Support\Js::from(array_map(fn ($firm) => $firm['name'], config('sales_form.firms'))) }};
@@ -88,8 +88,10 @@
                         return;
                     }
 
-                    if (! this.form.brokerage || Object.values(names).includes(this.form.brokerage)) {
+                    if (names[firm]) {
                         this.form.brokerage = names[firm];
+                    } else if (Object.values(names).includes(this.form.brokerage)) {
+                        this.form.brokerage = '';
                     }
                 },
 

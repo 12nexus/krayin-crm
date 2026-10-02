@@ -177,16 +177,6 @@
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
-                                    @lang('sales_form::app.index.lead.brokerage')
-                                    <span v-if="autofilled.brokerage" class="ml-1 font-normal text-green-600">(@lang('sales_form::app.index.autofilled'))</span>
-                                </label>
-
-                                <input type="text" name="brokerage" v-model="form.brokerage"
-                                    class="w-full rounded border border-gray-300 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                            </div>
-
-                            <div>
-                                <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
                                     @lang('sales_form::app.index.lead.city')
                                     <span v-if="autofilled.city" class="ml-1 font-normal text-green-600">(@lang('sales_form::app.index.autofilled'))</span>
                                 </label>

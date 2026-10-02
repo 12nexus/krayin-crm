@@ -4,6 +4,7 @@ namespace Nexus\SalesForm\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Nexus\SalesForm\Services\AgentLookupService;
 
 class SalesFormRequest extends FormRequest
 {
@@ -16,6 +17,7 @@ class SalesFormRequest extends FormRequest
     {
         return [
             'lead_value.min' => 'The estimated monthly value cannot be below the $:min retainer.',
+            'brokerage.required_if' => 'Type the name of the brokerage.',
         ];
     }
 
@@ -28,8 +30,8 @@ class SalesFormRequest extends FormRequest
             'using_assistant'        => ['nullable', Rule::in(['Yes', 'No'])],
             'assistant_type'         => ['nullable', Rule::in(['None', 'Remote VA', 'In-house Assistant', 'Other'])],
             'willingness'            => ['nullable', 'integer', 'between:1,3'],
-            'firm'                   => ['required', Rule::in(array_keys(config('sales_form.firms')))],
-            'brokerage'              => ['nullable', 'string', 'max:255'],
+            'firm'                   => ['required', Rule::in(array_keys(AgentLookupService::firmOptions()))],
+            'brokerage'              => ['required_if:firm,'.config('sales_form.other_firm.key'), 'nullable', 'string', 'max:255'],
             'city'                   => ['nullable', 'string', 'max:255'],
             'state'                  => ['required', 'string', 'max:255'],
             'phone'                  => ['required', 'string', 'max:30'],

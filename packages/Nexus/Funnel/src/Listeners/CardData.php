@@ -61,16 +61,21 @@ class CardData
             'call'       => $call,
             'notes'      => $notes,
             'engagement' => $fields['engagement_type'] ?? null,
-            'firm'       => $this->firmShort($fields['firm'] ?? null),
+            'firm'       => $this->firmShort($fields['firm'] ?? null, $fields['brokerage'] ?? null),
             'validity'   => $fields['lead_validity'] ?? null,
         ];
     }
 
     /**
-     * "eXp" / "RE/MAX" for the card, from the Firm's full name.
+     * "eXp" / "RE/MAX" for the card, from the Firm's full name; for Other, the
+     * brokerage the rep typed.
      */
-    protected function firmShort(?string $name): ?string
+    protected function firmShort(?string $name, ?string $brokerage = null): ?string
     {
+        if ($name === config('sales_form.other_firm.name')) {
+            return trim((string) $brokerage) ?: $name;
+        }
+
         foreach (config('sales_form.firms') as $firm) {
             if ($firm['name'] === $name) {
                 return $firm['short'];
@@ -84,7 +89,7 @@ class CardData
     {
         $this->codes ??= DB::table('attributes')
             ->where('entity_type', 'leads')
-            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity', 'source_notes', 'firm'])
+            ->whereIn('code', ['meeting_timezone', 'engagement_type', 'lead_validity', 'source_notes', 'firm', 'brokerage'])
             ->pluck('code', 'id')
             ->all();
 
@@ -97,7 +102,7 @@ class CardData
 
         foreach ($lead->attribute_values ?? [] as $value) {
             if ($code = $this->codes[$value->attribute_id] ?? null) {
-                $fields[$code] = $code === 'source_notes'
+                $fields[$code] = in_array($code, ['source_notes', 'brokerage'], true)
                     ? $value->text_value
                     : ($this->options[$value->integer_value] ?? null);
             }

@@ -449,7 +449,10 @@ class LeadBuilder
             'state_code' => $verified['state_code'] ?? $this->lookup->stateCode($state),
             'firm'       => $firm,
             'firm_name'  => AgentLookupService::firmName($firm),
-            'brokerage'  => $this->pick($input['brokerage'] ?? null, AgentLookupService::firmName($firm)),
+            // eXp Realty and RE/MAX are their own brokerage; Other is what the rep typed.
+            'brokerage'  => AgentLookupService::isOther($firm)
+                ? trim((string) ($input['brokerage'] ?? ''))
+                : AgentLookupService::firmName($firm),
             'country'    => $verified['country'] ?? '',
         ];
     }

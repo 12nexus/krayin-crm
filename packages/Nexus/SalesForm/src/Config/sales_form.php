@@ -67,6 +67,15 @@ return [
     ],
 
     /**
+     * The choice beside the firms for an agent with any other brokerage. It has
+     * no agent list; the rep types the brokerage's name, which the card shows.
+     */
+    'other_firm' => [
+        'key'  => 'other',
+        'name' => 'Other',
+    ],
+
+    /**
      * Form timezone label => IANA zone, used to store the meeting at the right
      * UTC instant. Labels say "Standard Time" but the zones observe DST, which
      * is what the reps actually mean.

@@ -118,7 +118,24 @@ class AgentLookupService
      */
     public static function firmName(?string $firm): string
     {
-        return (string) config('sales_form.firms.'.$firm.'.name', '');
+        return (string) (self::firmOptions()[$firm]['name'] ?? '');
+    }
+
+    /**
+     * What the rep picks from: the firms with an agent list, then Other.
+     *
+     * @return array<string, array{name: string}>
+     */
+    public static function firmOptions(): array
+    {
+        return config('sales_form.firms') + [
+            config('sales_form.other_firm.key') => ['name' => config('sales_form.other_firm.name')],
+        ];
+    }
+
+    public static function isOther(?string $firm): bool
+    {
+        return $firm !== null && $firm === config('sales_form.other_firm.key');
     }
 
     /**
