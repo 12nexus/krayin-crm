@@ -189,7 +189,10 @@
                         
                         lead:  @json($lead),  
 
-                        person:  @json($lead->person),  
+                        person:  @json($lead->person),
+
+                        // 12Nexus: without this the product list starts with an empty, required row and the form cannot be saved.
+                        products: @json($lead->products),
 
                         tabs: [
                             { id: 'lead-details', label: "@lang('admin::app.leads.edit.details')" },
