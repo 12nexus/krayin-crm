@@ -300,6 +300,10 @@ class LeadController extends Controller
             $data['lead_pipeline_stage_id'] = $stage->id;
         }
 
+        if (! empty($data['person']['id']) && bouncer()->hasPermission('contacts.persons.edit')) {
+            $this->updateLeadPerson($data['person']);
+        }
+
         $lead = $this->leadRepository->update($data, $id);
 
         Event::dispatch('lead.update.after', $lead);
@@ -855,5 +859,54 @@ class LeadController extends Controller
         }
 
         return $leads;
+    }
+
+    /**
+     * 12Nexus: save the contact details (emails, contact numbers, organization)
+     * edited on the lead form onto the lead's existing person. Stock Krayin
+     * locks those fields once a person is attached and ignores them on save.
+     *
+     * The person's current values are the base, because PersonRepository::update
+     * clears a missing user_id and rebuilds unique_id from what it is given.
+     */
+    private function updateLeadPerson(array $input): void
+    {
+        $fields = array_intersect_key($input, array_flip([
+            'emails',
+            'contact_numbers',
+            'organization_id',
+            'organization_name',
+        ]));
+
+        if (empty($fields)) {
+            return;
+        }
+
+        $person = $this->personRepository->findOrFail($input['id']);
+
+        /**
+         * A cleared phone field arrives as a null value. Drop those, and store no
+         * numbers as null: PersonRepository reads the first number unguarded.
+         */
+        if (array_key_exists('contact_numbers', $fields)) {
+            $numbers = array_values(array_filter(
+                (array) $fields['contact_numbers'],
+                fn ($number) => filled($number['value'] ?? null)
+            ));
+
+            $fields['contact_numbers'] = $numbers ?: null;
+        }
+
+        Event::dispatch('contacts.person.update.before', $person->id);
+
+        $person = $this->personRepository->update(array_merge([
+            'entity_type'     => 'persons',
+            'user_id'         => $person->user_id,
+            'organization_id' => $person->organization_id,
+            'emails'          => $person->emails,
+            'contact_numbers' => $person->contact_numbers,
+        ], $fields), $person->id, ['emails', 'contact_numbers', 'organization_id']);
+
+        Event::dispatch('contacts.person.update.after', $person);
     }
 }

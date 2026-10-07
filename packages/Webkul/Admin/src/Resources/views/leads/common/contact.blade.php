@@ -1,6 +1,10 @@
 {!! view_render_event('admin.leads.create.contact_person.form_controls.before') !!}
 
-<v-contact-component :data="person"></v-contact-component>
+{{-- 12Nexus: on the lead edit form, users who may edit contacts can change the contact's email, phone and organization. --}}
+<v-contact-component
+    :data="person"
+    :can-edit-person="@json(isset($lead) && bouncer()->hasPermission('contacts.persons.edit'))"
+></v-contact-component>
 
 {!! view_render_event('admin.leads.create.contact_person.form_controls.after') !!}
 
@@ -50,7 +54,7 @@
                 :attribute="{'id': person?.id, 'code': 'person[emails]', 'name': 'Email'}"
                 validations="required"
                 :value="person.emails"
-                :is-disabled="person?.id ? true : false"
+                :is-disabled="person?.id && ! canEditPerson ? true : false"
             ></v-email-component>
         </x-admin::form.control-group>
 
@@ -65,7 +69,7 @@
             <v-phone-component
                 :attribute="{'id': person?.id, 'code': 'person[contact_numbers]', 'name': 'Contact Numbers'}"
                 :value="person.contact_numbers"
-                :is-disabled="person?.id ? true : false"
+                :is-disabled="person?.id && ! canEditPerson ? true : false"
             ></v-phone-component>
         </x-admin::form.control-group>
 
@@ -90,7 +94,7 @@
                 :key="person.organization?.id"
                 :attribute='@json($organizationAttribute)'
                 :value="person.organization"
-                :is-disabled="person?.id ? true : false"
+                :is-disabled="person?.id && ! canEditPerson ? true : false"
                 can-add-new="true"
             ></v-lookup-component>
         </x-admin::form.control-group>
@@ -100,7 +104,7 @@
         app.component('v-contact-component', {
             template: '#v-contact-component-template',
 
-            props: ['data'],
+            props: ['data', 'canEditPerson'],
 
             data () {
                 return {
