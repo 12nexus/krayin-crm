@@ -885,27 +885,41 @@ class LeadController extends Controller
         $person = $this->personRepository->findOrFail($input['id']);
 
         /**
-         * A cleared phone field arrives as a null value. Drop those, and store no
-         * numbers as null: PersonRepository reads the first number unguarded.
+         * A cleared phone field arrives as a null value, so drop those. With no
+         * numbers left, PersonRepository cannot take them (it reads the first one
+         * unguarded), and the contact pages cannot show null, so the empty list
+         * is saved separately.
          */
+        $clearNumbers = false;
+
         if (array_key_exists('contact_numbers', $fields)) {
-            $numbers = array_values(array_filter(
+            $fields['contact_numbers'] = array_values(array_filter(
                 (array) $fields['contact_numbers'],
                 fn ($number) => filled($number['value'] ?? null)
             ));
 
-            $fields['contact_numbers'] = $numbers ?: null;
+            $clearNumbers = empty($fields['contact_numbers']);
         }
 
-        Event::dispatch('contacts.person.update.before', $person->id);
-
-        $person = $this->personRepository->update(array_merge([
+        $data = array_merge([
             'entity_type'     => 'persons',
             'user_id'         => $person->user_id,
             'organization_id' => $person->organization_id,
             'emails'          => $person->emails,
             'contact_numbers' => $person->contact_numbers,
-        ], $fields), $person->id, ['emails', 'contact_numbers', 'organization_id']);
+        ], $fields);
+
+        if ($clearNumbers || empty($data['contact_numbers'])) {
+            unset($data['contact_numbers']);
+        }
+
+        Event::dispatch('contacts.person.update.before', $person->id);
+
+        $person = $this->personRepository->update($data, $person->id, ['emails', 'contact_numbers', 'organization_id']);
+
+        if ($clearNumbers) {
+            $person->update(['contact_numbers' => []]);
+        }
 
         Event::dispatch('contacts.person.update.after', $person);
     }
