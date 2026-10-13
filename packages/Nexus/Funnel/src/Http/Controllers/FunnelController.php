@@ -21,7 +21,7 @@ use Webkul\Lead\Contracts\Lead;
 
 /**
  * The funnel actions on the lead view: valid / invalid, meeting held, no-show,
- * (re)scheduling a meeting or a call back, and restoring an archived lead.
+ * lost, (re)scheduling a meeting or a call back, and restoring an archived lead.
  */
 class FunnelController extends Controller
 {
@@ -50,6 +50,21 @@ class FunnelController extends Controller
         $reason = request()->validate(['reason' => ['nullable', 'string', 'max:2000']])['reason'] ?? null;
 
         return $this->run($lead, fn () => $this->funnel->markInvalid($lead, $this->user(), $reason), 'invalid');
+    }
+
+    /**
+     * Close the lead as Lost. Open to editors, and to a sales executive on
+     * their own lead; a reason is required.
+     */
+    public function lost(int $id): RedirectResponse
+    {
+        $lead = LeadAccess::findOrFail($id);
+
+        abort_unless($this->funnel->canMarkLost($lead, $this->user()), 401);
+
+        $reason = request()->validate(['reason' => ['required', 'string', 'max:2000']])['reason'];
+
+        return $this->run($lead, fn () => $this->funnel->markLost($lead, $this->user(), $reason), 'lost');
     }
 
     public function restore(int $id): RedirectResponse

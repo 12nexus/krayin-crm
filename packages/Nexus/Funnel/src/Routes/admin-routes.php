@@ -7,8 +7,8 @@ use Nexus\Funnel\Http\Controllers\FunnelController;
 /**
  * Named under admin.leads.* so Krayin's fail-closed route check authorises them
  * through the Leads feature. Each action also needs leads.edit (activities.create
- * to book a meeting or call back) and a lead the user may see; both are checked
- * in the controller.
+ * to book a meeting or call back; leads.edit or owning the lead to mark it lost)
+ * and a lead the user may see; both are checked in the controller.
  */
 Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => config('app.admin_path')], function () {
     /**
@@ -20,6 +20,8 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
         Route::post('valid', 'valid')->name('admin.leads.funnel.valid');
 
         Route::post('invalid', 'invalid')->name('admin.leads.funnel.invalid');
+
+        Route::post('lost', 'lost')->name('admin.leads.funnel.lost');
 
         Route::post('restore', 'restore')->name('admin.leads.funnel.restore');
 

@@ -106,6 +106,48 @@ class Funnel
         $this->note($lead, $by, "Restored from the archive by {$by->name}, back to {$stage->name}.");
     }
 
+    /**
+     * Who may close a lead as lost: anyone who may edit leads, and a sales
+     * executive (who may log activities but not edit leads) on a lead they own.
+     */
+    public function canMarkLost(Lead $lead, User $user): bool
+    {
+        if ($this->isArchived($lead) || in_array($this->stageCode($lead), ['won', 'lost'], true)) {
+            return false;
+        }
+
+        return bouncer()->hasPermission('leads.edit')
+            || (bouncer()->hasPermission('activities.create') && (int) $lead->user_id === (int) $user->id);
+    }
+
+    /**
+     * Close the lead as Lost with the rep's reason. Its open meetings and call
+     * backs are cancelled; the stage it left is kept in the note.
+     */
+    public function markLost(Lead $lead, User $by, string $reason): void
+    {
+        $stage = $lead->pipeline->stages()->where('code', 'lost')->first();
+
+        if (! $stage) {
+            throw new \RuntimeException('The pipeline has no Lost stage.');
+        }
+
+        $from = $lead->stage?->name ?? 'unknown stage';
+        $reason = trim($reason);
+
+        $lead->fill([
+            'lead_pipeline_stage_id' => $stage->id,
+            'lost_reason'            => $reason,
+            'closed_at'              => now(),
+        ])->save();
+
+        $this->closeOpenMeetings($lead, 'cancelled, lead lost');
+
+        $this->leadBuilder->closeOpenCalls($lead->id, 'cancelled, lead lost');
+
+        $this->note($lead, $by, "Marked LOST and closed by {$by->name} (was in {$from}).\nReason: {$reason}");
+    }
+
     public function meetingHeld(Lead $lead, User $by): void
     {
         $this->fields->set($lead->id, ['meeting_appeared' => config('funnel.appeared.attended')]);

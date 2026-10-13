@@ -20,6 +20,8 @@
     $canEdit = bouncer()->hasPermission('leads.edit');
     $canSchedule = bouncer()->hasPermission('activities.create');
     $canInvalidate = ! $archived && in_array($stage, config('funnel.invalidatable'), true);
+    // Editors on any open lead; a sales executive on a lead they own.
+    $canMarkLost = $funnel->canMarkLost($lead, auth()->guard('user')->user());
 
     // New Lead: when to call the client back.
     $hasCall = $stage === 'new' && ! $archived;
@@ -54,6 +56,8 @@
         <div class="flex flex-wrap gap-1">
             @if ($archived)
                 <span class="rounded-xl bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">@lang('funnel::app.panel.archived')</span>
+            @elseif ($stage === 'lost')
+                <span class="rounded-xl bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">@lang('funnel::app.panel.lost')</span>
             @elseif ($isValid)
                 <span class="rounded-xl bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">✓ @lang('funnel::app.panel.valid')</span>
             @endif
@@ -78,6 +82,13 @@
         @endif
     @else
         <p class="text-sm text-gray-500 dark:text-gray-400">@lang('funnel::app.panel.no-meeting')</p>
+    @endif
+
+    @if ($stage === 'lost' && ! $archived && $lead->lost_reason)
+        <p class="text-sm text-red-700 dark:text-red-400">
+            <span class="font-semibold">@lang('funnel::app.panel.lost-reason')</span>
+            {{ $lead->lost_reason }}
+        </p>
     @endif
 
     @if ($hasCall)
@@ -185,6 +196,16 @@
                     @lang('funnel::app.panel.mark-invalid')
                 </button>
             @endif
+
+            @if ($canMarkLost)
+                <button
+                    type="button"
+                    class="secondary-button !border-red-500 !text-red-600"
+                    @click="$emitter.emit('nexus-open-lost-modal')"
+                >
+                    @lang('funnel::app.panel.mark-lost')
+                </button>
+            @endif
         </div>
     @endif
 </div>
@@ -201,6 +222,10 @@
 
 @if ($canSchedule && $hasCall)
     <v-funnel-call></v-funnel-call>
+@endif
+
+@if ($canMarkLost)
+    <v-funnel-lost></v-funnel-lost>
 @endif
 
 @pushOnce('scripts')
@@ -332,6 +357,49 @@
         </x-admin::modal>
     </script>
 
+    <script type="text/x-template" id="v-funnel-lost-template">
+        <x-admin::modal ref="lostModal">
+            <x-slot:header>
+                <h3 class="text-base font-semibold dark:text-white">
+                    @lang('funnel::app.lost-modal.title')
+                </h3>
+            </x-slot>
+
+            <x-slot:content>
+                <form
+                    id="funnel-lost-form"
+                    method="POST"
+                    action="{{ route('admin.leads.funnel.lost', $lead->id) }}"
+                    class="flex flex-col gap-3"
+                >
+                    @csrf
+
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        @lang('funnel::app.lost-modal.hint')
+                    </p>
+
+                    <label class="required text-xs font-medium text-gray-800 dark:text-white">
+                        @lang('funnel::app.lost-modal.reason')
+                    </label>
+
+                    <textarea
+                        name="reason"
+                        rows="3"
+                        required
+                        maxlength="2000"
+                        class="w-full rounded border border-gray-300 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                    ></textarea>
+                </form>
+            </x-slot>
+
+            <x-slot:footer>
+                <button type="submit" form="funnel-lost-form" class="primary-button !bg-red-600 !border-red-600">
+                    @lang('funnel::app.lost-modal.confirm')
+                </button>
+            </x-slot>
+        </x-admin::modal>
+    </script>
+
     <script type="module">
         app.component('v-funnel-meeting', {
             template: '#v-funnel-meeting-template',
@@ -457,6 +525,14 @@
 
             mounted() {
                 this.$emitter.on('nexus-open-invalid-modal', () => this.$refs.invalidModal.open());
+            },
+        });
+
+        app.component('v-funnel-lost', {
+            template: '#v-funnel-lost-template',
+
+            mounted() {
+                this.$emitter.on('nexus-open-lost-modal', () => this.$refs.lostModal.open());
             },
         });
     </script>

@@ -24,6 +24,9 @@ return [
         'call-closed'       => 'This call back is closed.',
         'set-call'          => 'Set call back time',
         'reschedule-call'   => 'Reschedule call',
+        'mark-lost'         => 'Mark as lost',
+        'lost'              => 'Lost',
+        'lost-reason'       => 'Lost reason:',
     ],
 
     'call-modal' => [
@@ -45,9 +48,17 @@ return [
         'confirm' => 'Mark invalid',
     ],
 
+    'lost-modal' => [
+        'title'   => 'Mark lead as lost',
+        'hint'    => 'The lead moves to Lost and is closed. Any open meeting or call back is cancelled. Say why the client did not go ahead; it is kept on the lead.',
+        'reason'  => 'Why was the lead lost?',
+        'confirm' => 'Mark lost and close',
+    ],
+
     'flash' => [
         'valid'    => 'Lead marked as valid.',
         'invalid'  => 'Lead marked invalid and archived.',
+        'lost'     => 'Lead marked as lost and closed.',
         'restored' => 'Lead restored to New Lead.',
         'held'     => 'Meeting recorded as held. The lead is now in Follow Up.',
         'no-show'  => 'No-show recorded. The lead is now in No Show; reschedule when the client is ready.',
