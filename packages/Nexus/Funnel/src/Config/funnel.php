@@ -57,5 +57,12 @@ return [
         ))))),
 
         'timezone' => 'America/Los_Angeles',
+
+        /**
+         * Users with these roles also get their own copy each morning, listing
+         * only the leads they own. Inactive users and users with nothing to
+         * chase get nothing.
+         */
+        'agent_roles' => ['Sales Executive'],
     ],
 ];

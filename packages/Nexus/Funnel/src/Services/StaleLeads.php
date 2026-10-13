@@ -89,6 +89,7 @@ class StaleLeads
             'leads.id as lead_id',
             'leads.title as lead_title',
             'leads.created_at',
+            'leads.user_id as owner_id',
             'persons.name as client_name',
             'users.name as owner_name',
             'lead_pipelines.name as pipeline_name',

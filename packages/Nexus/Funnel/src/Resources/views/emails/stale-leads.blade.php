@@ -29,13 +29,17 @@
 
     <tr><td bgcolor="{{ $NAVY }}" style="padding:24px 32px;background-color:{{ $NAVY }};">
       <div style="font-family:{{ $FONT }};font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:{{ $T300 }};padding-bottom:8px;">
-        Daily pipeline check
+        {{ $agentName ? 'Your daily pipeline check' : 'Daily pipeline check' }}
       </div>
       <div style="font-family:{{ $FONT }};font-size:23px;line-height:31px;font-weight:700;color:#ffffff;">
         {{ $overdue->count() }} overdue follow-up{{ $overdue->count() === 1 ? '' : 's' }} &middot; {{ $rotten->count() }} rotten lead{{ $rotten->count() === 1 ? '' : 's' }}
       </div>
       <div style="font-family:{{ $FONT }};font-size:14px;line-height:22px;color:{{ $T100 }};padding-top:9px;">
-        Open leads only (not Won, Lost or archived), as of {{ $local($now)->format('D j M Y, g:i A T') }}.
+        @if ($agentName)
+          Hi {{ strtok($agentName, ' ') }}, these are the open leads you own that need chasing, as of {{ $local($now)->format('D j M Y, g:i A T') }}.
+        @else
+          Open leads only (not Won, Lost or archived), as of {{ $local($now)->format('D j M Y, g:i A T') }}.
+        @endif
       </div>
     </td></tr>
 
@@ -48,7 +52,7 @@
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
             <th style="{{ $th }}">Lead</th>
-            <th style="{{ $th }}">Owner</th>
+            @unless ($agentName)<th style="{{ $th }}">Owner</th>@endunless
             <th style="{{ $th }}">Stage</th>
             <th style="{{ $th }}">Follow-up</th>
             <th style="{{ $th }}">Was due</th>
@@ -57,7 +61,7 @@
           @foreach ($overdue as $row)
             <tr>
               <td style="{{ $td }}"><a href="{{ $leadUrl($row->lead_id) }}" style="color:{{ $BLUE }};font-weight:600;text-decoration:none;">{{ $row->client_name ?: $row->lead_title }}</a></td>
-              <td style="{{ $td }}">{{ $row->owner_name ?: 'Unassigned' }}</td>
+              @unless ($agentName)<td style="{{ $td }}">{{ $row->owner_name ?: 'Unassigned' }}</td>@endunless
               <td style="{{ $td }}">{{ $row->stage_name }}</td>
               <td style="{{ $td }}">{{ ucfirst($row->activity_type) }}@if ($row->activity_title)<br><span style="color:{{ $MUTED }};">{{ $row->activity_title }}</span>@endif</td>
               <td style="{{ $td }}white-space:nowrap;">{{ $local($row->due)->format('D j M, g:i A') }}</td>
@@ -77,7 +81,7 @@
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
             <th style="{{ $th }}">Lead</th>
-            <th style="{{ $th }}">Owner</th>
+            @unless ($agentName)<th style="{{ $th }}">Owner</th>@endunless
             <th style="{{ $th }}">Stage</th>
             <th style="{{ $th }}">Created</th>
             <th style="{{ $th }}">Last activity</th>
@@ -86,7 +90,7 @@
           @foreach ($rotten as $row)
             <tr>
               <td style="{{ $td }}"><a href="{{ $leadUrl($row->lead_id) }}" style="color:{{ $BLUE }};font-weight:600;text-decoration:none;">{{ $row->client_name ?: $row->lead_title }}</a></td>
-              <td style="{{ $td }}">{{ $row->owner_name ?: 'Unassigned' }}</td>
+              @unless ($agentName)<td style="{{ $td }}">{{ $row->owner_name ?: 'Unassigned' }}</td>@endunless
               <td style="{{ $td }}">{{ $row->stage_name }}</td>
               <td style="{{ $td }}white-space:nowrap;">{{ $local($row->created)->format('j M Y') }}</td>
               <td style="{{ $td }}white-space:nowrap;">{{ $row->last_activity ? $local($row->last_activity)->format('j M Y') : 'Never' }}</td>
@@ -98,7 +102,11 @@
     </td></tr>
 
     <tr><td style="padding:22px 32px 26px 32px;font-family:{{ $FONT }};font-size:12px;line-height:18px;color:{{ $MUTED }};">
-      Sent every morning at 8:00 AM Pacific by the CRM. A follow-up drops off this list once it is marked done or rescheduled; a lead drops off once it is Won, Lost or archived.
+      @if ($agentName)
+        Sent every morning at 8:00 AM Pacific by the CRM. To clear a follow-up, open the lead and mark the call or meeting done, record the meeting as held or a no-show, or reschedule it. A lead leaves the rotten list once it is Won, Lost or marked invalid.
+      @else
+        Sent every morning at 8:00 AM Pacific by the CRM. A follow-up drops off this list once it is marked done or rescheduled; a lead drops off once it is Won, Lost or archived. Each sales executive also gets a copy with only their own leads.
+      @endif
     </td></tr>
 
   </table>
