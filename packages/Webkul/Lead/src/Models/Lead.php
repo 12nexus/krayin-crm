@@ -168,6 +168,7 @@ class Lead extends Model implements LeadContract
 
         $rottenDate = $this->created_at->addDays($this->pipeline->rotten_days);
 
-        return $rottenDate->diffInDays(Carbon::now(), false);
+        // 12Nexus: Carbon 3 returns fractional days ("13.54 Days"); show whole days.
+        return (int) floor($rottenDate->diffInDays(Carbon::now(), false));
     }
 }
