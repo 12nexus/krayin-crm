@@ -44,4 +44,18 @@ return [
         'attended' => 'Yes - Attended',
         'no_show'  => 'No - No Show',
     ],
+
+    /**
+     * The daily email of overdue follow-ups and rotten leads
+     * (`nexus:stale-leads`), sent at 08:00 in `timezone` by the host's
+     * krayin-stale-leads timer. Times in the email are shown in `timezone`.
+     */
+    'digest' => [
+        'recipients' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'FUNNEL_DIGEST_RECIPIENTS',
+            'shehzer@12nexusbpo.com,shozib@12nexus.net'
+        ))))),
+
+        'timezone' => 'America/Los_Angeles',
+    ],
 ];

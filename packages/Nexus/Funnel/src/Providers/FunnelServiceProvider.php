@@ -4,6 +4,7 @@ namespace Nexus\Funnel\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Nexus\Funnel\Console\Commands\SendStaleLeadsDigest;
 use Nexus\Funnel\Http\Middleware\LeadEditGuard;
 use Nexus\Funnel\Listeners\BoardOrder;
 use Nexus\Funnel\Listeners\CardData;
@@ -90,6 +91,12 @@ class FunnelServiceProvider extends ServiceProvider
         Event::listen('admin.layout.body.after', function ($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('funnel::layouts.copy');
         });
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                SendStaleLeadsDigest::class,
+            ]);
+        }
     }
 
     public function register(): void
