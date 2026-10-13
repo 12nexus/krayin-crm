@@ -252,6 +252,49 @@ class GoogleCalendar
         return ($named[0] ?? (count($matches) === 1 && $name === '' ? $matches[0] : null))['id'] ?? null;
     }
 
+    /**
+     * Every event in the sales calendar starting in [from, to), recurring ones
+     * expanded, following Google's pagination.
+     */
+    public function events(Carbon $from, Carbon $to): array
+    {
+        $events = [];
+        $pageToken = null;
+
+        do {
+            $page = $this->request('get', '/calendars/'.rawurlencode($this->calendarId()).'/events?'.http_build_query(array_filter([
+                'timeMin'      => $from->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
+                'timeMax'      => $to->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
+                'singleEvents' => 'true',
+                'orderBy'      => 'startTime',
+                'maxResults'   => 250,
+                'pageToken'    => $pageToken,
+            ])));
+
+            array_push($events, ...($page['items'] ?? []));
+
+            $pageToken = $page['nextPageToken'] ?? null;
+        } while ($pageToken);
+
+        return $events;
+    }
+
+    /**
+     * One event by id, or null when it is gone.
+     */
+    public function event(string $eventId): ?array
+    {
+        try {
+            return $this->request('get', '/calendars/'.rawurlencode($this->calendarId()).'/events/'.rawurlencode($eventId));
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            if (in_array($e->response->status(), [404, 410], true)) {
+                return null;
+            }
+
+            throw $e;
+        }
+    }
+
     protected function request(string $method, string $path, array $body = []): array
     {
         $response = Http::withToken($this->accessToken())

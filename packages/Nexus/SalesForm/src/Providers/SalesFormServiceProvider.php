@@ -6,6 +6,7 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Nexus\SalesForm\Console\Commands\ImportViciDialAgents;
+use Nexus\SalesForm\Console\Commands\SyncMeetingNotes;
 use Nexus\SalesForm\Listeners\LeadCreated;
 
 class SalesFormServiceProvider extends ServiceProvider
@@ -40,9 +41,21 @@ class SalesFormServiceProvider extends ServiceProvider
             }
         );
 
+        /**
+         * Links to the Google Meet notes and recordings on the notes
+         * nexus:meeting-notes writes.
+         */
+        Event::listen(
+            'admin.components.activities.content.activity.item.description.after',
+            function ($viewRenderEventManager) {
+                $viewRenderEventManager->addTemplate('sales_form::activities.meet-files');
+            }
+        );
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ImportViciDialAgents::class,
+                SyncMeetingNotes::class,
             ]);
         }
     }
