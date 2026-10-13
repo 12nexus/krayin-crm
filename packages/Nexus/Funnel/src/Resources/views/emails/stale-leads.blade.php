@@ -43,6 +43,31 @@
       </div>
     </td></tr>
 
+    @unless ($agentName || ($overdue->isEmpty() && $rotten->isEmpty()))
+      @php
+        $agents = $overdue->pluck('owner_name')->merge($rotten->pluck('owner_name'))
+            ->map(fn ($name) => $name ?: 'Unassigned')->unique()->sort()->values();
+      @endphp
+      <tr><td style="padding:26px 32px 6px 32px;">
+        <div style="{{ $h2 }}">By agent</div>
+        <div style="{{ $sub }}">Each agent also gets their own copy of their rows below.</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <th style="{{ $th }}">Agent</th>
+            <th style="{{ $th }}text-align:right;">Overdue follow-ups</th>
+            <th style="{{ $th }}text-align:right;">Rotten leads</th>
+          </tr>
+          @foreach ($agents as $agent)
+            <tr>
+              <td style="{{ $td }}font-weight:600;">{{ $agent }}</td>
+              <td style="{{ $td }}text-align:right;">{{ $overdue->filter(fn ($r) => ($r->owner_name ?: 'Unassigned') === $agent)->count() }}</td>
+              <td style="{{ $td }}text-align:right;">{{ $rotten->filter(fn ($r) => ($r->owner_name ?: 'Unassigned') === $agent)->count() }}</td>
+            </tr>
+          @endforeach
+        </table>
+      </td></tr>
+    @endunless
+
     <tr><td style="padding:26px 32px 6px 32px;">
       <div style="{{ $h2 }}">Overdue follow-ups</div>
       <div style="{{ $sub }}">Calls and meetings past their time and not marked done. Times in {{ $zoneLabel }}.</div>
@@ -52,7 +77,7 @@
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
             <th style="{{ $th }}">Lead</th>
-            @unless ($agentName)<th style="{{ $th }}">Owner</th>@endunless
+            @unless ($agentName)<th style="{{ $th }}">Agent</th>@endunless
             <th style="{{ $th }}">Stage</th>
             <th style="{{ $th }}">Follow-up</th>
             <th style="{{ $th }}">Was due</th>
@@ -81,7 +106,7 @@
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
             <th style="{{ $th }}">Lead</th>
-            @unless ($agentName)<th style="{{ $th }}">Owner</th>@endunless
+            @unless ($agentName)<th style="{{ $th }}">Agent</th>@endunless
             <th style="{{ $th }}">Stage</th>
             <th style="{{ $th }}">Created</th>
             <th style="{{ $th }}">Last activity</th>
@@ -105,7 +130,7 @@
       @if ($agentName)
         Sent every morning at 8:00 AM Pacific by the CRM. To clear a follow-up, open the lead and mark the call or meeting done, record the meeting as held or a no-show, or reschedule it. A lead leaves the rotten list once it is Won, Lost or marked invalid.
       @else
-        Sent every morning at 8:00 AM Pacific by the CRM. A follow-up drops off this list once it is marked done or rescheduled; a lead drops off once it is Won, Lost or archived. Each sales executive also gets a copy with only their own leads.
+        Sent every morning at 8:00 AM Pacific by the CRM. A follow-up drops off this list once it is marked done or rescheduled; a lead drops off once it is Won, Lost or archived.
       @endif
     </td></tr>
 
