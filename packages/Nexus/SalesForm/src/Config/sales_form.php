@@ -143,6 +143,22 @@ return [
     ],
 
     /**
+     * The 12Nexus Dialer Chrome extension on the ViciDial agent screen
+     * (api/dialer/*). Choosing one of these dispositions opens the CRM form
+     * before the disposition is submitted: `meeting` opens on lead + meeting,
+     * `lead` on a lead with no meeting; the rep can switch between the two.
+     * DIALER_DISPOSITIONS="SALE:meeting,CALLBK:lead" overrides the list.
+     */
+    'dialer' => [
+        'token_days' => env('DIALER_TOKEN_DAYS', 7),
+
+        'dispositions' => env('DIALER_DISPOSITIONS') ?: [
+            'SALE'   => 'meeting',
+            'CALLBK' => 'lead',
+        ],
+    ],
+
+    /**
      * Linked from the calendar invite the client receives.
      */
     'website_url' => 'https://12nexusbpo.com',

@@ -178,4 +178,22 @@ return [
         'success' => 'Lead created: :title',
         'failed'  => 'Could not create the lead. Nothing was saved, so please check the details and try again.',
     ],
+
+    'dialer' => [
+        'signed-out' => 'Your CRM sign-in has expired. Sign in again.',
+        'logged-out' => 'Signed out of the CRM.',
+
+        'login' => [
+            'failed'        => 'That email and password do not match a CRM account.',
+            'throttled'     => 'Too many attempts. Try again in :seconds seconds.',
+            'disabled'      => 'This CRM account is disabled. Ask an administrator.',
+            'no-permission' => 'This CRM account cannot create leads. Ask an administrator.',
+        ],
+
+        'created' => [
+            'meeting'  => 'Lead and meeting saved: :title',
+            'lead'     => 'Lead saved: :title',
+            'existing' => 'Meeting booked on :title',
+        ],
+    ],
 ];
