@@ -7,6 +7,29 @@
 >
 
 <head>
+    {{--
+        12Nexus: the theme preference (light, dark or system) is the theme_mode
+        cookie. dark_mode keeps the mode in effect, which the server renders
+        from; for "system" only the browser knows it, so it is settled here
+        before the page paints. No theme_mode yet: the dark_mode render stands.
+    --}}
+    <script>
+        (function () {
+            var match = document.cookie.match(/(?:^|;\s*)theme_mode=(light|dark|system)/);
+
+            if (! match) {
+                return;
+            }
+
+            var dark = match[1] === 'dark'
+                || (match[1] === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            document.documentElement.classList.toggle('dark', dark);
+
+            document.cookie = 'dark_mode=' + (dark ? 1 : 0) + '; path=/; max-age=31536000; SameSite=Lax';
+        })();
+    </script>
+
 
     {!! view_render_event('admin.layout.head.before') !!}
 

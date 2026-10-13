@@ -2308,6 +2308,13 @@ return [
     ],
     'layouts' => [
         'app-version' => 'Version: :version',
+
+        'theme' => [
+            'title'  => 'Theme',
+            'light'  => 'Light',
+            'dark'   => 'Dark',
+            'system' => 'System',
+        ],
         'dashboard' => 'Dashboard',
         'help' => 'Help & Resources',
         'leads' => 'Leads',

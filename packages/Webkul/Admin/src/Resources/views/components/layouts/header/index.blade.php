@@ -43,11 +43,11 @@
             @include('admin::components.layouts.header.mobile.mega-search')
         </div>
         
-        <!-- Dark mode -->
+        <!-- Theme: light, dark or system -->
         <v-dark>
             <div class="flex">
                 <span
-                    class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} p-1.5 rounded-md text-2xl cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    class="{{ request()->cookie('dark_mode') ? 'icon-dark' : 'icon-light' }} p-1.5 rounded-md text-2xl cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
                 ></span>
             </div>
         </v-dark>
@@ -136,13 +136,44 @@
         type="text/x-template"
         id="v-dark-template"
     >
-        <div class="flex">
-            <span
-                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                :class="[isDarkMode ? 'icon-light' : 'icon-dark']"
-                @click="toggle"
-            ></span>
-        </div>
+        <!-- 12Nexus: Light / Dark / System instead of a light-dark toggle -->
+        <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
+            <x-slot:toggle>
+                <button
+                    type="button"
+                    class="flex rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                    :title="labels.title + ': ' + labels[mode]"
+                    :aria-label="labels.title + ': ' + labels[mode]"
+                >
+                    <span v-if="mode !== 'system'" :class="mode === 'dark' ? 'icon-dark' : 'icon-light'"></span>
+
+                    <svg v-else class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="12" rx="1.5" />
+                        <path d="M8 20h8M12 16v4" />
+                    </svg>
+                </button>
+            </x-slot>
+
+            <x-slot:menu class="!min-w-36">
+                <x-admin::dropdown.menu.item
+                    v-for="option in ['light', 'dark', 'system']"
+                    @click="set(option)"
+                >
+                    <div class="flex w-full items-center gap-2">
+                        <span v-if="option !== 'system'" class="text-xl" :class="option === 'dark' ? 'icon-dark' : 'icon-light'"></span>
+
+                        <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="12" rx="1.5" />
+                            <path d="M8 20h8M12 16v4" />
+                        </svg>
+
+                        <span class="flex-1" v-text="labels[option]"></span>
+
+                        <span v-if="mode === option" class="icon-tick text-lg text-brandColor"></span>
+                    </div>
+                </x-admin::dropdown.menu.item>
+            </x-slot>
+        </x-admin::dropdown>
     </script>
 
     <script type="module">
@@ -151,49 +182,78 @@
 
             data() {
                 return {
-                    isDarkMode: {{ request()->cookie('dark_mode') ?? 0 }},
+                    // light, dark or system; before any choice, what dark_mode says.
+                    mode: this.cookie('theme_mode') || (parseInt(this.cookie('dark_mode') || 0) ? 'dark' : 'light'),
 
-                    logo: "{{ vite()->asset('images/logo.svg') }}",
+                    labels: {
+                        title: "@lang('admin::app.layouts.theme.title')",
+                        light: "@lang('admin::app.layouts.theme.light')",
+                        dark: "@lang('admin::app.layouts.theme.dark')",
+                        system: "@lang('admin::app.layouts.theme.system')",
+                    },
 
-                    dark_logo: "{{ vite()->asset('images/dark-logo.svg') }}",
+                    // Default logos, light → dark; a logo set in Configuration is left alone.
+                    logos: {
+                        "{{ vite()->asset('images/logo.svg') }}": "{{ vite()->asset('images/dark-logo.svg') }}",
+                        "{{ vite()->asset('images/mobile-light-logo.svg') }}": "{{ vite()->asset('images/mobile-dark-logo.svg') }}",
+                    },
+
+                    media: window.matchMedia('(prefers-color-scheme: dark)'),
                 };
             },
 
-            methods: {
-                toggle() {
-                    this.isDarkMode = parseInt(this.isDarkModeCookie()) ? 0 : 1;
-
-                    var expiryDate = new Date();
-
-                    expiryDate.setMonth(expiryDate.getMonth() + 1);
-
-                    document.cookie = 'dark_mode=' + this.isDarkMode + '; path=/; expires=' + expiryDate.toGMTString();
-
-                    document.documentElement.classList.toggle('dark', this.isDarkMode === 1);
-
-                    if (this.isDarkMode) {
-                        this.$emitter.emit('change-theme', 'dark');
-
-                        document.getElementById('logo-image').src = this.dark_logo;
-                    } else {
-                        this.$emitter.emit('change-theme', 'light');
-
-                        document.getElementById('logo-image').src = this.logo;
+            mounted() {
+                // Follow the device while on "system".
+                this.media.addEventListener('change', () => {
+                    if (this.mode === 'system') {
+                        this.apply();
                     }
+                });
+
+                this.apply();
+            },
+
+            methods: {
+                set(mode) {
+                    this.mode = mode;
+
+                    document.cookie = 'theme_mode=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+
+                    this.apply();
                 },
 
-                isDarkModeCookie() {
-                    const cookies = document.cookie.split(';');
+                apply() {
+                    const dark = this.mode === 'dark' || (this.mode === 'system' && this.media.matches);
 
-                    for (const cookie of cookies) {
-                        const [name, value] = cookie.trim().split('=');
+                    document.cookie = 'dark_mode=' + (dark ? 1 : 0) + '; path=/; max-age=31536000; SameSite=Lax';
 
-                        if (name === 'dark_mode') {
+                    if (document.documentElement.classList.contains('dark') !== dark) {
+                        document.documentElement.classList.toggle('dark', dark);
+
+                        this.$emitter.emit('change-theme', dark ? 'dark' : 'light');
+                    }
+
+                    document.querySelectorAll('img#logo-image').forEach((image) => {
+                        for (const [light, darkLogo] of Object.entries(this.logos)) {
+                            if (dark && image.getAttribute('src') === light) {
+                                image.src = darkLogo;
+                            } else if (! dark && image.getAttribute('src') === darkLogo) {
+                                image.src = light;
+                            }
+                        }
+                    });
+                },
+
+                cookie(name) {
+                    for (const cookie of document.cookie.split(';')) {
+                        const [key, value] = cookie.trim().split('=');
+
+                        if (key === name) {
                             return value;
                         }
                     }
 
-                    return 0;
+                    return null;
                 },
             },
         });
