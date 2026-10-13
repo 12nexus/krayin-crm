@@ -10,7 +10,8 @@ use Illuminate\Validation\ValidationException;
  * One sales meeting at a time, across the whole team, so the administrator who
  * sits in on every discovery call is never double-booked.
  *
- * A slot is taken by any open (not done) meeting whose window overlaps the new
+ * A slot is taken by any open (not done) meeting whose window, plus the
+ * buffer (sales_form.meeting_buffer_minutes) either side, overlaps the new
  * one. Meetings a reschedule supersedes are closed first, so they never block
  * the time they are being moved away from.
  */
@@ -23,10 +24,16 @@ class MeetingSlots
     const LOCK = 'nexus_sales_meeting_booking';
 
     /**
-     * The meeting occupying any part of [start, end), if there is one.
+     * The meeting occupying any part of [start, end), widened by the buffer on
+     * both sides, if there is one.
      */
     public function clash(Carbon $startUtc, Carbon $endUtc, array $ignoreActivityIds = []): ?object
     {
+        $buffer = $this->buffer();
+
+        $startUtc = $startUtc->copy()->subMinutes($buffer);
+        $endUtc = $endUtc->copy()->addMinutes($buffer);
+
         return DB::table('activities')
             ->leftJoin('lead_activities', 'lead_activities.activity_id', '=', 'activities.id')
             ->leftJoin('leads', 'leads.id', '=', 'lead_activities.lead_id')
@@ -124,18 +131,26 @@ class MeetingSlots
         return [$start, $start->copy()->addMinutes((int) config('sales_form.notify.meeting_minutes'))];
     }
 
+    public function buffer(): int
+    {
+        return max(0, (int) config('sales_form.meeting_buffer_minutes'));
+    }
+
     protected function message(object $clash, string $timezone): string
     {
         $from = Carbon::parse($clash->schedule_from, 'UTC')->setTimezone($timezone);
         $to = Carbon::parse($clash->schedule_to, 'UTC')->setTimezone($timezone);
 
         return sprintf(
-            'Another sales meeting is already booked on %s from %s to %s %s%s. Pick a different time.',
+            'Another sales meeting is already booked on %s from %s to %s %s%s. Meetings need %d minutes free before and after, so pick a time from %s or earlier, or from %s or later.',
             $from->format('D j M'),
             $from->format('g:i A'),
             $to->format('g:i A'),
             $from->format('T'),
-            $clash->owner ? ' (booked by '.$clash->owner.')' : ''
+            $clash->owner ? ' (booked by '.$clash->owner.')' : '',
+            $this->buffer(),
+            $from->copy()->subMinutes($this->buffer() + (int) config('sales_form.notify.meeting_minutes'))->format('g:i A'),
+            $to->copy()->addMinutes($this->buffer())->format('g:i A'),
         );
     }
 }

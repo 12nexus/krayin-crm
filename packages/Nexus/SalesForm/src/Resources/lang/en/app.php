@@ -154,7 +154,7 @@ return [
         'all-day'      => 'All day',
         'this-meeting' => 'This meeting',
         'free'         => 'free',
-        'clash'        => 'Overlaps with :count event(s) already on the sales calendar.',
+        'clash'        => 'Too close to :count event(s) on the sales calendar. Leave :buffer minutes free before and after each meeting.',
         'clear'        => 'No clash with the calendar at this time.',
         'stale'        => 'Google Calendar could not be reached; showing the last copy.',
         'unavailable'  => 'The sales calendar could not be loaded right now.',

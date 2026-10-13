@@ -5,6 +5,7 @@
 
     The server returns each event's times already converted into the day's
     zone, as minutes from midnight, so the clash check here is plain arithmetic.
+    Like the server's check, it keeps the buffer free either side of a meeting.
 --}}
 @php
     // Built here: Blade cannot parse a multi-line array inside @json().
@@ -76,7 +77,7 @@
                 <p
                     v-if="proposed && conflicts.length"
                     class="mt-2 text-sm font-medium text-red-700 dark:text-red-300"
-                    v-text="strings.clash.replace(':count', conflicts.length)"
+                    v-text="strings.clash.replace(':count', conflicts.length).replace(':buffer', plan.buffer_minutes || 0)"
                 ></p>
 
                 <p v-else-if="proposed" class="mt-2 text-sm text-green-700 dark:text-green-400">
@@ -170,11 +171,13 @@
 
             methods: {
                 clashes(event) {
+                    const buffer = this.plan.buffer_minutes || 0;
+
                     return !! this.proposed
                         && event.busy
                         && ! event.all_day
-                        && event.start_min < this.proposed.end
-                        && event.end_min > this.proposed.start;
+                        && event.start_min < this.proposed.end + buffer
+                        && event.end_min > this.proposed.start - buffer;
                 },
 
                 label(totalMinutes) {

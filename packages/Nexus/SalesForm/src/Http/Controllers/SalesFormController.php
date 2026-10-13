@@ -253,6 +253,7 @@ class SalesFormController extends Controller
             'zone_label'      => $dayStart->copy()->setTime(12, 0)->format('T'),
             'is_client_zone'  => (bool) (request('timezone') && isset(config('sales_form.timezones')[request('timezone')])),
             'meeting_minutes' => (int) config('sales_form.notify.meeting_minutes'),
+            'buffer_minutes'  => (int) config('sales_form.meeting_buffer_minutes'),
             'stale'           => $plan['stale'],
             'events'          => $plan['events'],
         ]);

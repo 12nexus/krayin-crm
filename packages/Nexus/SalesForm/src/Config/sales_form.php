@@ -44,6 +44,14 @@ return [
     'call_minutes' => 15,
 
     /**
+     * Free time kept either side of every sales meeting. The invite is still
+     * meeting_minutes long (30), but no other meeting may start within this
+     * many minutes of one ending, so with 30 + 30 meetings start at least an
+     * hour apart.
+     */
+    'meeting_buffer_minutes' => 30,
+
+    /**
      * Days after the meeting used for the lead's expected close date.
      */
     'close_date_offset_days' => 14,
