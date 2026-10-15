@@ -29,6 +29,10 @@ class PhoneServiceProvider extends ServiceProvider
         Event::listen('admin.leads.view.person.contact_numbers.after', function ($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('phone::leads.call-buttons');
         });
+
+        Event::listen('admin.components.activities.content.activity.item.description.after', function ($viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('phone::activities.recording');
+        });
     }
 
     public function register(): void

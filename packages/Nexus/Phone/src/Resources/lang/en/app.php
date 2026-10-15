@@ -12,6 +12,10 @@ return [
         'leave'      => 'You are on a call. Leaving this page pauses the audio until the phone reloads.',
     ],
 
+    'activity' => [
+        'play-recording' => 'Play recording',
+    ],
+
     'lead' => [
         'call'        => 'Call',
         'call-number' => 'Call :number from :from',

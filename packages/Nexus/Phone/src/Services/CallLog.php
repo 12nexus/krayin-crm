@@ -140,8 +140,9 @@ class CallLog
             'title'   => $this->title($row),
             'type'    => 'call',
             'comment' => $this->comment($row, $userName),
-            'user_id' => $row->user_id ?: ($lead->user_id ?? $this->fallbackUserId()),
-            'is_done' => 1,
+            'user_id'    => $row->user_id ?: ($lead->user_id ?? $this->fallbackUserId()),
+            'is_done'    => 1,
+            'additional' => $this->additional($row),
         ]);
 
         DB::table('lead_activities')->insert(['lead_id' => $lead->id, 'activity_id' => $activity->id]);
@@ -160,8 +161,17 @@ class CallLog
         DB::table('activities')->where('id', $row->activity_id)->update([
             'title'      => $this->title($row),
             'comment'    => $this->comment($row, $userName),
+            'additional' => $this->additional($row),
             'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Read by the activity list (phone::activities.recording) for the play link.
+     */
+    protected function additional(object $row): string
+    {
+        return json_encode(['phone_call_id' => $row->call_id, 'recording_url' => $row->recording_url]);
     }
 
     protected function title(object $row): string
