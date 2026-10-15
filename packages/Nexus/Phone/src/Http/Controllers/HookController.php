@@ -61,6 +61,7 @@ class HookController extends Controller
             'lead_id'        => 'nullable|integer',
             'notes'          => 'nullable|string|max:5000',
             'recording_url'  => 'nullable|url|max:255',
+            'source'         => 'nullable|string|max:40',
         ]);
 
         return new JsonResponse($this->callLog->record($call));
@@ -82,6 +83,7 @@ class HookController extends Controller
             'krayin_user_id' => 'nullable|integer',
             'user_name'      => 'nullable|string|max:100',
             'lead_id'        => 'nullable|integer',
+            'source'         => 'nullable|string|max:40',
         ]);
 
         return new JsonResponse($this->callLog->recordText($text));

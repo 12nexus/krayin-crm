@@ -16,6 +16,11 @@ use Webkul\Activity\Repositories\ActivityRepository;
  */
 class CallLog
 {
+    /**
+     * Where an imported record came from (e.g. "call.com"); null for the web phone.
+     */
+    protected ?string $source = null;
+
     public function __construct(protected ActivityRepository $activityRepository) {}
 
     /**
@@ -79,6 +84,8 @@ class CallLog
      */
     public function record(array $call): array
     {
+        $this->source = $call['source'] ?? null;
+
         $row = DB::table('nexus_phone_calls')->where('call_id', $call['call_id'])->first();
 
         $leadId = $call['lead_id'] ?? null;
@@ -184,7 +191,8 @@ class CallLog
             $body = trim((string) ($text['body'] ?? ''));
 
             $activity = $this->activityRepository->create([
-                'title'      => $incoming ? 'Text received from '.$text['number'] : 'Text sent to '.$text['number'].(! empty($text['user_name']) ? ' by '.$text['user_name'] : ''),
+                'title'      => ($incoming ? 'Text received from '.$text['number'] : 'Text sent to '.$text['number'].(! empty($text['user_name']) ? ' by '.$text['user_name'] : ''))
+                    .(! empty($text['source']) ? ' (via '.$text['source'].')' : ''),
                 'type'       => 'note',
                 'comment'    => ($body !== '' ? $body : '(no text)').($media ? ' — Attachments: '.implode(' ', $media) : ''),
                 'user_id'    => $userId ?: ($lead->user_id ?? $this->fallbackUserId()),
@@ -199,6 +207,9 @@ class CallLog
             }
 
             DB::table('nexus_phone_texts')->where('id', $id)->update(['activity_id' => $activity->id]);
+
+            $sentAt = Carbon::parse($text['sent_at'])->utc()->format('Y-m-d H:i:s');
+            DB::table('activities')->where('id', $activity->id)->update(['created_at' => $sentAt, 'updated_at' => $sentAt]);
 
             return ['logged' => true, 'lead_id' => (int) $leadId, 'activity_id' => (int) $activity->id];
         });
@@ -224,6 +235,11 @@ class CallLog
         }
 
         DB::table('nexus_phone_calls')->where('id', $row->id)->update(['activity_id' => $activity->id]);
+
+        // Listed when it happened, not when it was reported (or imported).
+        if ($row->started_at) {
+            DB::table('activities')->where('id', $activity->id)->update(['created_at' => $row->started_at, 'updated_at' => $row->started_at]);
+        }
 
         return (int) $activity->id;
     }
@@ -268,7 +284,7 @@ class CallLog
         $missed = $row->direction === 'in' && $row->result !== 'answered';
 
         $details = implode(' · ', array_filter([
-            ($row->direction === 'in' ? 'From ' : 'To ').$row->number,
+            ($row->direction === 'in' ? 'From ' : 'To ').$row->number.($this->source ? ' via '.$this->source : ''),
             $who && ! $missed ? 'by '.$who : null,
             $row->started_at ? Carbon::parse($row->started_at, 'UTC')->setTimezone(config('app.timezone', 'UTC'))->format('D j M Y, g:i A T') : null,
             $row->recording_url ? 'Recording: '.$row->recording_url : null,
