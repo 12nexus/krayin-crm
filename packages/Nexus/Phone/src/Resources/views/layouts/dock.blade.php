@@ -9,7 +9,10 @@
         <div class="nexus-phone-panel" role="dialog" aria-label="@lang('phone::app.dock.phone')">
             <div class="nexus-phone-head">
                 <span class="nexus-phone-title">@lang('phone::app.dock.phone') · {{ config('phone.number') }}</span>
-                <a href="{{ route('admin.leads.phone.sso') }}" target="_blank" rel="noopener" class="nexus-phone-link">@lang('phone::app.dock.open-full') ↗</a>
+                {{-- The standalone phone is for admins; everyone else uses it here. --}}
+                @if (auth()->guard('user')->user()->role?->permission_type === 'all')
+                    <a href="{{ route('admin.leads.phone.sso') }}" target="_blank" rel="noopener" class="nexus-phone-link">@lang('phone::app.dock.open-full') ↗</a>
+                @endif
                 <button type="button" class="nexus-phone-x" onclick="NexusPhone.toggle(false)" aria-label="@lang('phone::app.dock.hide')">×</button>
             </div>
             <iframe
@@ -47,6 +50,11 @@
                     this.toggle(true);
                     if (ready) post({ t: 'dial', number, lead });
                     else queued = { t: 'dial', number, lead };
+                },
+                text(number, lead) {
+                    this.toggle(true);
+                    if (ready) post({ t: 'text', number, lead });
+                    else queued = { t: 'text', number, lead };
                 },
             };
 

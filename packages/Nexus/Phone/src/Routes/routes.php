@@ -20,4 +20,5 @@ Route::middleware([VerifyPhoneSignature::class, 'throttle:120,1'])->prefix('nexu
     Route::get('users', [HookController::class, 'users']);
     Route::get('lookup', [HookController::class, 'lookup']);
     Route::post('calls', [HookController::class, 'calls']);
+    Route::post('texts', [HookController::class, 'texts']);
 });

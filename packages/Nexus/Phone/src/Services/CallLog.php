@@ -8,7 +8,7 @@ use Webkul\Activity\Repositories\ActivityRepository;
 
 /**
  * Matches phone numbers to leads and records the web phone's calls as finished
- * "call" activities on the lead.
+ * "call" activities, and its texts as notes, on the lead.
  *
  * The activities have no schedule: the funnel's call-back logic only reads call
  * activities with schedule_from set, so a logged call never stands in for a
@@ -129,6 +129,78 @@ class CallLog
             }
 
             return ['logged' => true, 'lead_id' => (int) $leadId, 'activity_id' => $activityId];
+        });
+    }
+
+    /**
+     * Record a text sent or received on the number (idempotent on sms_id) as a
+     * note on its lead.
+     *
+     * @return array{logged: bool, lead_id: ?int, activity_id: ?int}
+     */
+    public function recordText(array $text): array
+    {
+        if (DB::table('nexus_phone_texts')->where('sms_id', $text['sms_id'])->exists()) {
+            $row = DB::table('nexus_phone_texts')->where('sms_id', $text['sms_id'])->first();
+
+            return ['logged' => (bool) $row->activity_id, 'lead_id' => $row->lead_id, 'activity_id' => $row->activity_id];
+        }
+
+        $leadId = $text['lead_id'] ?? null;
+
+        if ($leadId && ! DB::table('leads')->where('id', $leadId)->exists()) {
+            $leadId = null;
+        }
+
+        $leadId ??= $this->leadFor($text['number'])['id'] ?? null;
+
+        $userId = $text['krayin_user_id'] ?? null;
+
+        if ($userId && ! DB::table('users')->where('id', $userId)->exists()) {
+            $userId = null;
+        }
+
+        return DB::transaction(function () use ($text, $leadId, $userId) {
+            $id = DB::table('nexus_phone_texts')->insertGetId([
+                'sms_id'     => $text['sms_id'],
+                'lead_id'    => $leadId,
+                'user_id'    => $userId,
+                'direction'  => $text['direction'],
+                'number'     => $text['number'],
+                'body'       => $text['body'] ?? '',
+                'media'      => json_encode(array_values($text['media'] ?? [])),
+                'sent_at'    => Carbon::parse($text['sent_at'])->utc()->format('Y-m-d H:i:s'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            if (! $leadId) {
+                return ['logged' => false, 'lead_id' => null, 'activity_id' => null];
+            }
+
+            $lead = DB::table('leads')->where('id', $leadId)->first(['id', 'user_id', 'person_id']);
+            $incoming = $text['direction'] === 'in';
+            $media = array_values($text['media'] ?? []);
+            $body = trim((string) ($text['body'] ?? ''));
+
+            $activity = $this->activityRepository->create([
+                'title'      => $incoming ? 'Text received from '.$text['number'] : 'Text sent to '.$text['number'].(! empty($text['user_name']) ? ' by '.$text['user_name'] : ''),
+                'type'       => 'note',
+                'comment'    => ($body !== '' ? $body : '(no text)').($media ? ' — Attachments: '.implode(' ', $media) : ''),
+                'user_id'    => $userId ?: ($lead->user_id ?? $this->fallbackUserId()),
+                'is_done'    => 1,
+                'additional' => json_encode(['phone_sms_id' => $text['sms_id'], 'media' => $media]),
+            ]);
+
+            DB::table('lead_activities')->insert(['lead_id' => $lead->id, 'activity_id' => $activity->id]);
+
+            if ($lead->person_id) {
+                DB::table('person_activities')->insert(['person_id' => $lead->person_id, 'activity_id' => $activity->id]);
+            }
+
+            DB::table('nexus_phone_texts')->where('id', $id)->update(['activity_id' => $activity->id]);
+
+            return ['logged' => true, 'lead_id' => (int) $leadId, 'activity_id' => (int) $activity->id];
         });
     }
 

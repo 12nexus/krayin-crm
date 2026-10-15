@@ -65,4 +65,25 @@ class HookController extends Controller
 
         return new JsonResponse($this->callLog->record($call));
     }
+
+    /**
+     * A text sent or received on the number, logged on its lead.
+     */
+    public function texts(Request $request): JsonResponse
+    {
+        $text = $request->validate([
+            'sms_id'         => 'required|string|max:64',
+            'direction'      => 'required|in:in,out',
+            'number'         => 'required|string|max:32',
+            'body'           => 'nullable|string|max:2000',
+            'media'          => 'nullable|array|max:10',
+            'media.*'        => 'url|max:500',
+            'sent_at'        => 'required|date',
+            'krayin_user_id' => 'nullable|integer',
+            'user_name'      => 'nullable|string|max:100',
+            'lead_id'        => 'nullable|integer',
+        ]);
+
+        return new JsonResponse($this->callLog->recordText($text));
+    }
 }

@@ -14,10 +14,13 @@ return [
 
     'activity' => [
         'play-recording' => 'Play recording',
+        'attachment'     => 'Attachment',
     ],
 
     'lead' => [
         'call'        => 'Call',
         'call-number' => 'Call :number from :from',
+        'text'        => 'Text',
+        'text-number' => 'Text :number from :from',
     ],
 ];

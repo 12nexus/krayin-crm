@@ -7,8 +7,9 @@ use Illuminate\Support\ServiceProvider;
 
 /**
  * The 12Nexus web phone inside the CRM: a phone dock on every page signed in as
- * the current user, call buttons on a lead's numbers, and each call logged as a
- * "call" activity on its lead (see Services/CallLog).
+ * the current user (calls and texts), Call and Text buttons on a lead's numbers,
+ * and each call logged as a "call" activity and each text as a note on its lead
+ * (see Services/CallLog).
  */
 class PhoneServiceProvider extends ServiceProvider
 {
