@@ -27,6 +27,7 @@ use Webkul\WebForm\Providers\WebFormServiceProvider;
 use Nexus\Clients\Providers\ClientsServiceProvider;
 use Nexus\FollowUp\Providers\FollowUpServiceProvider;
 use Nexus\Funnel\Providers\FunnelServiceProvider;
+use Nexus\Phone\Providers\PhoneServiceProvider;
 use Nexus\SalesForm\Providers\SalesFormServiceProvider;
 
 return [
@@ -73,4 +74,5 @@ return [
     FunnelServiceProvider::class,
     ClientsServiceProvider::class,
     FollowUpServiceProvider::class,
+    PhoneServiceProvider::class,
 ];
