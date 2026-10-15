@@ -16,7 +16,8 @@
                 id="nexus-phone-frame"
                 title="@lang('phone::app.dock.phone')"
                 src="{{ route('admin.leads.phone.sso', ['embed' => 1]) }}"
-                allow="microphone; autoplay"
+                {{-- The src redirects to the phone, so name its origin: a bare "microphone" would only cover the CRM's own. --}}
+                allow="microphone {{ config('phone.url') }}; autoplay {{ config('phone.url') }}"
             ></iframe>
         </div>
 

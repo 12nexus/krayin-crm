@@ -176,20 +176,25 @@ class CallLog
         };
     }
 
+    /**
+     * One line of details, then the notes: the activity list shows comments as
+     * plain text and runs line breaks together.
+     */
     protected function comment(object $row, ?string $userName): string
     {
         $who = $userName ?: ($row->user_id ? DB::table('users')->where('id', $row->user_id)->value('name') : null);
+        $missed = $row->direction === 'in' && $row->result !== 'answered';
 
-        $lines = array_filter([
-            ($row->direction === 'in' ? 'From ' : 'To ').$row->number.' via the web phone',
-            $who ? ($row->direction === 'in' && $row->result !== 'answered' ? 'Missed' : 'By '.$who) : null,
-            $row->started_at ? 'Started '.Carbon::parse($row->started_at, 'UTC')->setTimezone(config('app.timezone', 'UTC'))->format('D j M Y, g:i A T') : null,
+        $details = implode(' · ', array_filter([
+            ($row->direction === 'in' ? 'From ' : 'To ').$row->number,
+            $who && ! $missed ? 'by '.$who : null,
+            $row->started_at ? Carbon::parse($row->started_at, 'UTC')->setTimezone(config('app.timezone', 'UTC'))->format('D j M Y, g:i A T') : null,
             $row->recording_url ? 'Recording: '.$row->recording_url : null,
-        ]);
+        ]));
 
         $notes = trim((string) $row->notes);
 
-        return implode("\n", $lines).($notes !== '' ? "\n\nNotes:\n".$notes : '');
+        return $details.($notes !== '' ? ' — Notes: '.$notes : '');
     }
 
     protected function duration(int $seconds): string
