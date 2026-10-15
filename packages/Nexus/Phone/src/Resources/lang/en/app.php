@@ -15,6 +15,7 @@ return [
     'activity' => [
         'play-recording' => 'Play recording',
         'attachment'     => 'Attachment',
+        'transcript'     => 'Transcript',
     ],
 
     'lead' => [

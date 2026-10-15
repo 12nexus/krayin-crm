@@ -4,6 +4,7 @@ namespace Nexus\Phone\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Nexus\Phone\Jobs\TranscribeCall;
 use Webkul\Activity\Repositories\ActivityRepository;
 
 /**
@@ -21,7 +22,10 @@ class CallLog
      */
     protected ?string $source = null;
 
-    public function __construct(protected ActivityRepository $activityRepository) {}
+    public function __construct(
+        protected ActivityRepository $activityRepository,
+        protected CallNotes $callNotes,
+    ) {}
 
     /**
      * The lead a number belongs to: the person's most recently updated open lead,
@@ -116,7 +120,11 @@ class CallLog
 
         $values['notes'] = trim((string) ($call['notes'] ?? '')) ?: null;
 
-        return DB::transaction(function () use ($row, $call, $values, $leadId) {
+        // A new recording gets Gemini's notes (Services/CallNotes) a minute later,
+        // once the phone has finished writing the file.
+        $transcribe = $values['recording_url'] && $values['recording_url'] !== ($row->recording_url ?? null);
+
+        $result = DB::transaction(function () use ($row, $call, $values, $leadId) {
             if ($row) {
                 DB::table('nexus_phone_calls')->where('id', $row->id)->update($values);
             } else {
@@ -137,6 +145,12 @@ class CallLog
 
             return ['logged' => true, 'lead_id' => (int) $leadId, 'activity_id' => $activityId];
         });
+
+        if ($transcribe && $result['logged'] && $this->callNotes->enabled()) {
+            TranscribeCall::dispatch($call['call_id'])->delay(now()->addMinute());
+        }
+
+        return $result;
     }
 
     /**
