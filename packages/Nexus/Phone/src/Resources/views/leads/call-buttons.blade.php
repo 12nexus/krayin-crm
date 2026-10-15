@@ -17,7 +17,7 @@
 
             <button
                 type="button"
-                class="inline-flex items-center gap-1 rounded-md border border-green-600 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-gray-900"
+                class="inline-flex items-center gap-1 rounded-md nexus-phone-outline border px-2.5 py-1 text-xs font-semibold"
                 title="@lang('phone::app.lead.text-number', ['number' => $contactNumber['value'], 'from' => config('phone.number')])"
                 onclick="window.NexusPhone && window.NexusPhone.text(@js($contactNumber['value']), { id: {{ $lead->id }}, title: @js($lead->title), number: @js($contactNumber['value']) })"
             >

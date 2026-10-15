@@ -95,22 +95,36 @@
 
     <style>
         .nexus-phone-dock { position: fixed; right: 18px; bottom: 18px; z-index: 10050; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font-family: inherit; }
-        .nexus-phone-panel { width: 340px; height: 560px; max-height: calc(100vh - 100px); background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.18); display: flex; flex-direction: column; overflow: hidden; }
+        .nexus-phone-panel { width: 340px; height: 560px; max-height: calc(100vh - 100px); background: #fff; border: 1px solid #D7E2FF; border-radius: 14px; box-shadow: 0 12px 32px rgba(1,27,53,.14); display: flex; flex-direction: column; overflow: hidden; }
         /* Hidden off-screen rather than display:none, so the phone keeps running and rings. */
         .nexus-phone-dock[data-open="0"] .nexus-phone-panel { position: fixed; left: -10000px; top: 0; visibility: hidden; }
-        .nexus-phone-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 14px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
-        .nexus-phone-title { flex: 1; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .nexus-phone-link { color: #0f766e; font-size: 12px; white-space: nowrap; }
+        .nexus-phone-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 14px; border-bottom: 1px solid #EAF0FF; font-size: 13px; }
+        .nexus-phone-title { flex: 1; font-weight: 600; color: #011B35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .nexus-phone-link { color: #004EF0; font-size: 12px; white-space: nowrap; }
+        .nexus-phone-link:hover { text-decoration: underline; }
         .nexus-phone-x { font-size: 20px; line-height: 1; color: #6b7280; padding: 0 4px; background: none; border: 0; cursor: pointer; }
         #nexus-phone-frame { flex: 1; width: 100%; border: 0; background: #fff; }
-        .nexus-phone-fab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 0; cursor: pointer; background: #0f766e; color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+        .nexus-phone-fab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 0; cursor: pointer; background: #011B35; color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(1,27,53,.25); transition: background-color .15s; }
+        .nexus-phone-fab:hover { background: #0B2E63; }
         .nexus-phone-fab svg { width: 18px; height: 18px; }
+        /* Ringing and on-a-call keep red and green, so the state reads at a glance. */
         .nexus-phone-dock[data-state="active"] .nexus-phone-fab { background: #16a34a; }
         .nexus-phone-dock[data-state="ringing"] .nexus-phone-fab { background: #dc2626; animation: nexus-phone-pulse 1s infinite; }
         @keyframes nexus-phone-pulse { 50% { transform: scale(1.06); } }
-        .dark .nexus-phone-panel { background: #111827; border-color: #1f2937; }
-        .dark .nexus-phone-head { border-color: #1f2937; }
-        .dark .nexus-phone-title { color: #f3f4f6; }
+        .dark .nexus-phone-panel { background: #031427; border-color: #0B2E63; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+        .dark .nexus-phone-head { border-color: #0B2E63; }
+        .dark .nexus-phone-title { color: #D7E2FF; }
+        .dark .nexus-phone-link { color: #7EA2FF; }
+        .dark .nexus-phone-x { color: #7EA2FF; }
+        /*
+            Brand outline buttons on lead pages (Text, Play recording). They live here
+            because the dock sits outside the Vue app, which drops <style> tags in its
+            templates, and Krayin's CSS is prebuilt, so new Tailwind colours don't exist.
+        */
+        .nexus-phone-outline { border-color: #004EF0; color: #004EF0; }
+        .nexus-phone-outline:hover { background: #EAF0FF; }
+        .dark .nexus-phone-outline { border-color: #7EA2FF; color: #7EA2FF; }
+        .dark .nexus-phone-outline:hover { background: #0B2E63; }
         @media (max-width: 480px) { .nexus-phone-panel { width: calc(100vw - 24px); } .nexus-phone-dock { right: 12px; bottom: 12px; } }
     </style>
 @endif
