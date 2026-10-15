@@ -116,6 +116,9 @@
         .dark .nexus-phone-title { color: #D7E2FF; }
         .dark .nexus-phone-link { color: #7EA2FF; }
         .dark .nexus-phone-x { color: #7EA2FF; }
+        /* Navy would vanish on the dark page: the idle button turns brand blue there. */
+        .dark .nexus-phone-dock[data-state="idle"] .nexus-phone-fab { background: #004EF0; }
+        .dark .nexus-phone-dock[data-state="idle"] .nexus-phone-fab:hover { background: #0B2E63; }
         /*
             Brand outline buttons on lead pages (Text, Play recording). They live here
             because the dock sits outside the Vue app, which drops <style> tags in its
