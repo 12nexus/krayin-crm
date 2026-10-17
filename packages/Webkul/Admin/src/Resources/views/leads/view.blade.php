@@ -89,11 +89,11 @@
                 </div>
             </div>
 
+            <!-- Contact Person (12Nexus: above the lead attributes so contact details show first) -->
+            @include ('admin::leads.view.person')
+
             <!-- Lead Attributes -->
             @include ('admin::leads.view.attributes')
-
-            <!-- Contact Person -->
-            @include ('admin::leads.view.person')
         </div>
 
         {!! view_render_event('admin.leads.view.left.after', ['lead' => $lead]) !!}
