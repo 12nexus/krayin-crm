@@ -10,11 +10,11 @@ class ImportViciDialAgents extends Command
 {
     protected $signature = 'nexus:import-vicidial
         {file : Path to the ViciDial agent CSV export}
-        {--firm= : Whose agent list this is: a key of sales_form.firms (exp, remax)}
+        {--firm= : Whose agent list this is: a key of sales_form.firms (exp, remax, kw)}
         {--truncate : Remove the agents already on file for this firm first (other firms are kept)}
         {--chunk=1000 : Rows per insert batch}';
 
-    protected $description = 'Import a firm\'s ViciDial agent list (eXp, RE/MAX) into vicidial_agents for phone lookups.';
+    protected $description = 'Import a firm\'s ViciDial agent list (eXp, RE/MAX, Keller Williams) into vicidial_agents for phone lookups.';
 
     /**
      * CSV header => table column. Anything not listed is ignored.

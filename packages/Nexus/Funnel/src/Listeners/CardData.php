@@ -67,7 +67,7 @@ class CardData
     }
 
     /**
-     * "eXp" / "RE/MAX" for the card, from the Firm's full name; for Other, the
+     * "eXp" / "RE/MAX" / "KW" for the card, from the Firm's full name; for Other, the
      * brokerage the rep typed.
      */
     protected function firmShort(?string $name, ?string $brokerage = null): ?string

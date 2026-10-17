@@ -37,14 +37,14 @@ return [
 
         'lookup' => [
             'title'          => 'Lead Identification',
-            'hint'           => 'Enter the phone number first. Matching agents are pulled from the eXp Realty and RE/MAX lists automatically.',
+            'hint'           => 'Enter the phone number first. Matching agents are pulled from the eXp Realty, RE/MAX and Keller Williams lists automatically.',
             'phone'          => 'Phone Number',
             'fetch'          => 'Fetch details',
             'refetch'        => 'Phone number changed, fetch details',
             'searching'      => 'Looking up…',
             'matched'        => 'Matched in the :firm agent list',
-            'not-matched'    => 'No match in the eXp Realty or RE/MAX agent lists',
-            'not-matched-help' => 'Choose the brokerage (Other, and type its name, if it is not eXp Realty or RE/MAX), then fill in the name, city, state and email manually below.',
+            'not-matched'    => 'No match in the eXp Realty, RE/MAX or Keller Williams agent lists',
+            'not-matched-help' => 'Choose the brokerage (Other, and type its name, if it is not eXp Realty, RE/MAX or Keller Williams), then fill in the name, city, state and email manually below.',
             'incomplete'     => 'Enter all 10 digits to look the number up.',
             'verified-name'  => 'Verified name',
             'verified-email' => 'Email on file',

@@ -228,10 +228,10 @@
                                             @{{ element.user.name }}
                                         </div>
 
-                                        <!-- Firm the client is with: eXp / RE/MAX (12Nexus) -->
+                                        <!-- Firm the client is with: eXp / RE/MAX / KW (12Nexus) -->
                                         <div
                                             class="rounded-xl px-2 py-1 text-xs font-medium"
-                                            :class="element.extra.firm === 'RE/MAX' ? 'bg-red-100 text-red-800' : (element.extra.firm === 'eXp' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800')"
+                                            :class="{ 'RE/MAX': 'bg-red-100 text-red-800', 'eXp': 'bg-indigo-100 text-indigo-800', 'KW': 'bg-amber-100 text-amber-800' }[element.extra.firm] ?? 'bg-gray-100 text-gray-800'"
                                             v-if="element.extra?.firm"
                                         >
                                             @{{ element.extra.firm }}

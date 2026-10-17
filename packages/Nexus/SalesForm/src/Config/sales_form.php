@@ -72,6 +72,11 @@ return [
             'name'  => 'RE/MAX',
             'short' => 'RE/MAX',
         ],
+
+        'kw' => [
+            'name'  => 'Keller Williams',
+            'short' => 'KW',
+        ],
     ],
 
     /**
