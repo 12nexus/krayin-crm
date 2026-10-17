@@ -461,7 +461,7 @@ class LeadBuilder
     protected function title(array $who): string
     {
         return sprintf(
-            'VA Opportunity — %s (%s, %s)',
+            '%s (%s, %s)',
             $who['name'],
             $who['city'] !== '' ? $who['city'] : 'Unknown',
             $who['state_code'] !== '' ? $who['state_code'] : '—'
