@@ -45,6 +45,20 @@ class HookController extends Controller
     }
 
     /**
+     * Lead names for a batch of numbers, so the phone can show who each call or
+     * text was with.
+     */
+    public function names(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'numbers'   => 'present|array|max:5000',
+            'numbers.*' => 'string|max:32',
+        ]);
+
+        return new JsonResponse(['leads' => (object) $this->callLog->leadsFor($data['numbers'])]);
+    }
+
+    /**
      * A finished call, logged on its lead.
      */
     public function calls(Request $request): JsonResponse

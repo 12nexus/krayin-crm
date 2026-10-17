@@ -82,6 +82,103 @@ class CallLog
     }
 
     /**
+     * The lead each of these numbers belongs to, picked as leadFor() picks it,
+     * keyed by the number as given. Numbers without a lead are left out.
+     *
+     * @return array<string, array{id: int, title: string, person_name: string}>
+     */
+    public function leadsFor(array $numbers): array
+    {
+        $wanted = [];
+
+        foreach ($numbers as $number) {
+            $digits = $this->digits((string) $number);
+
+            if (strlen($digits) >= 7) {
+                $wanted[$digits][] = (string) $number;
+            }
+        }
+
+        if (! $wanted) {
+            return [];
+        }
+
+        // Person ids and names per number, from every stored contact number.
+        $personsFor = [];
+        $names = [];
+
+        DB::table('persons')
+            ->whereNotNull('contact_numbers')
+            ->select(['id', 'name', 'contact_numbers'])
+            ->orderBy('id')
+            ->chunk(1000, function ($persons) use ($wanted, &$personsFor, &$names) {
+                foreach ($persons as $person) {
+                    foreach (json_decode($person->contact_numbers ?? '[]', true) ?: [] as $entry) {
+                        $digits = $this->digits((string) ($entry['value'] ?? ''));
+
+                        if (isset($wanted[$digits])) {
+                            $personsFor[$digits][$person->id] = true;
+                            $names[$person->id] = (string) $person->name;
+                        }
+                    }
+                }
+            });
+
+        if (! $names) {
+            return [];
+        }
+
+        // Each person's best lead: open before closed, then most recently updated.
+        $leadOf = [];
+
+        DB::table('leads')
+            ->whereIn('person_id', array_keys($names))
+            ->orderByRaw('closed_at IS NULL DESC')
+            ->orderByDesc('updated_at')
+            ->get(['id', 'title', 'person_id', 'closed_at', 'updated_at'])
+            ->each(function ($lead) use (&$leadOf) {
+                $leadOf[$lead->person_id] ??= $lead;
+            });
+
+        $result = [];
+
+        foreach ($personsFor as $digits => $personIds) {
+            $best = null;
+
+            foreach (array_keys($personIds) as $personId) {
+                $lead = $leadOf[$personId] ?? null;
+
+                if ($lead && (! $best || $this->ranksBefore($lead, $best))) {
+                    $best = $lead;
+                }
+            }
+
+            if (! $best) {
+                continue;
+            }
+
+            foreach ($wanted[$digits] as $number) {
+                $result[$number] = [
+                    'id'          => (int) $best->id,
+                    'title'       => (string) $best->title,
+                    'person_name' => $names[$best->person_id] ?? '',
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    protected function ranksBefore(object $a, object $b): bool
+    {
+        if (is_null($a->closed_at) !== is_null($b->closed_at)) {
+            return is_null($a->closed_at);
+        }
+
+        return (string) $a->updated_at > (string) $b->updated_at;
+    }
+
+    /**
      * Record a finished call (idempotent on call_id) and add it to its lead.
      *
      * @return array{logged: bool, lead_id: ?int, activity_id: ?int}

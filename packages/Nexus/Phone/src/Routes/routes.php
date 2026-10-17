@@ -19,6 +19,7 @@ Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => confi
 Route::middleware([VerifyPhoneSignature::class, 'throttle:120,1'])->prefix('nexus-phone')->group(function () {
     Route::get('users', [HookController::class, 'users']);
     Route::get('lookup', [HookController::class, 'lookup']);
+    Route::post('names', [HookController::class, 'names']);
     Route::post('calls', [HookController::class, 'calls']);
     Route::post('texts', [HookController::class, 'texts']);
 });
