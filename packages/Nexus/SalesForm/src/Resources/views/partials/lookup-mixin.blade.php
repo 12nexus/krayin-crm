@@ -78,7 +78,7 @@
 
             watch: {
                 /**
-                 * eXp Realty, RE/MAX and Keller Williams are the brokerage. Other asks for the
+                 * eXp Realty, RE/MAX, Keller Williams and Coldwell Banker are the brokerage. Other asks for the
                  * brokerage's name: it starts empty rather than holding a firm's.
                  */
                 'form.firm'(firm) {

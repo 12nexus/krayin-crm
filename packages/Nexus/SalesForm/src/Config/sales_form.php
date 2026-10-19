@@ -77,6 +77,11 @@ return [
             'name'  => 'Keller Williams',
             'short' => 'KW',
         ],
+
+        'cb' => [
+            'name'  => 'Coldwell Banker',
+            'short' => 'CB',
+        ],
     ],
 
     /**

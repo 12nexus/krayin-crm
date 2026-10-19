@@ -142,7 +142,7 @@
                             </div>
                         </div>
 
-                        <!-- Brokerage: eXp Realty / RE/MAX / Keller Williams (set from the list the number matched in), or Other with its name typed in -->
+                        <!-- Brokerage: eXp Realty / RE/MAX / Keller Williams / Coldwell Banker (set from the list the number matched in), or Other with its name typed in -->
                         <div class="mt-4">
                             <p class="mb-2 text-xs font-medium text-gray-800 after:ml-0.5 after:text-red-500 after:content-['*'] dark:text-white">
                                 @lang('sales_form::app.index.lookup.firm')
