@@ -174,9 +174,19 @@ class PersonRepository extends Repository
         $data['unique_id'] = implode('|', $uniqueIdParts);
 
         if (isset($data['contact_numbers'])) {
-            $data['contact_numbers'] = collect($data['contact_numbers'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
+            /**
+             * 12Nexus: an empty phone field arrives as a null value. Re-index after
+             * dropping those, and skip the unique id part when no number is left,
+             * instead of failing with "Undefined array key 0".
+             */
+            $data['contact_numbers'] = collect($data['contact_numbers'])
+                ->filter(fn ($number) => filled($number['value'] ?? null))
+                ->values()
+                ->toArray();
 
-            $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            if (! empty($data['contact_numbers'])) {
+                $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            }
         }
 
         return $data;
