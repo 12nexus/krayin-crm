@@ -34,4 +34,22 @@ return [
         'model'        => env('NEXUS_CALL_NOTES_MODEL', 'gemini-flash-latest'),
         'min_duration' => (int) env('NEXUS_CALL_NOTES_MIN_DURATION', 15),
     ],
+
+    /**
+     * The AI caller (aicaller.apps.12nexusbpo.com): calls open New Leads with no
+     * meeting in the last stale_days days (and created at least that long ago)
+     * to book a discovery meeting. A lead is closed as Lost after max_attempts
+     * calls nobody answered, at least retry_hours apart. Meetings are offered
+     * on weekdays between meeting_hours in the client's zone, from lead_hours
+     * ahead, over the next slot_days days.
+     */
+    'ai' => [
+        'user_email'    => env('NEXUS_AI_USER_EMAIL', 'ai-caller@12nexusbpo.com'),
+        'stale_days'    => (int) env('NEXUS_AI_STALE_DAYS', 14),
+        'max_attempts'  => (int) env('NEXUS_AI_MAX_ATTEMPTS', 6),
+        'retry_hours'   => (int) env('NEXUS_AI_RETRY_HOURS', 20),
+        'meeting_hours' => [env('NEXUS_AI_MEETING_FROM', '10:00'), env('NEXUS_AI_MEETING_TO', '17:00')],
+        'lead_hours'    => (int) env('NEXUS_AI_LEAD_HOURS', 3),
+        'slot_days'     => (int) env('NEXUS_AI_SLOT_DAYS', 7),
+    ],
 ];

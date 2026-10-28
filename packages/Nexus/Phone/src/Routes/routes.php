@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nexus\Phone\Http\Controllers\AiCallerController;
 use Nexus\Phone\Http\Controllers\HookController;
 use Nexus\Phone\Http\Controllers\SsoController;
 use Nexus\Phone\Http\Middleware\VerifyPhoneSignature;
@@ -22,4 +23,10 @@ Route::middleware([VerifyPhoneSignature::class, 'throttle:120,1'])->prefix('nexu
     Route::post('names', [HookController::class, 'names']);
     Route::post('calls', [HookController::class, 'calls']);
     Route::post('texts', [HookController::class, 'texts']);
+
+    // The AI caller (aicaller.apps.12nexusbpo.com).
+    Route::get('ai/queue', [AiCallerController::class, 'queue']);
+    Route::get('ai/slots', [AiCallerController::class, 'slots']);
+    Route::post('ai/book', [AiCallerController::class, 'book']);
+    Route::post('ai/result', [AiCallerController::class, 'result']);
 });
