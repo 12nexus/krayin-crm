@@ -121,7 +121,7 @@ class AiCaller
                 'email'           => $emails->first(),
                 'owner_name'      => $row->owner_name,
                 'stage'           => $row->stage,
-                'timezone'        => $fields['meeting_timezone'] ?? null,
+                'timezone'        => $fields['meeting_timezone'] ?? $this->zoneOfState($fields['agent_state'] ?? null),
                 'city'            => $fields['agent_city'] ?? null,
                 'state'           => $fields['agent_state'] ?? null,
                 'brokerage'       => $fields['brokerage'] ?? null,
@@ -399,6 +399,36 @@ class AiCaller
         $next = now($zones[$label])->addWeekday()->setTime(11, 0);
 
         return [$next->format('Y-m-d H:i'), $label];
+    }
+
+    /**
+     * The sales form's zone label for a US state (name or abbreviation), going by
+     * where most of the state is. Alaska and Hawaii fall back to Pacific.
+     */
+    protected function zoneOfState(?string $state): ?string
+    {
+        $state = strtoupper(trim((string) $state));
+
+        if ($state === '') {
+            return null;
+        }
+
+        $zones = [
+            'EST (Eastern Standard Time)' => ['CT', 'DE', 'DC', 'FL', 'GA', 'IN', 'KY', 'ME', 'MD', 'MA', 'MI', 'NH', 'NJ', 'NY', 'NC', 'OH', 'PA', 'RI', 'SC', 'VT', 'VA', 'WV',
+                'CONNECTICUT', 'DELAWARE', 'DISTRICT OF COLUMBIA', 'FLORIDA', 'GEORGIA', 'INDIANA', 'KENTUCKY', 'MAINE', 'MARYLAND', 'MASSACHUSETTS', 'MICHIGAN', 'NEW HAMPSHIRE', 'NEW JERSEY', 'NEW YORK', 'NORTH CAROLINA', 'OHIO', 'PENNSYLVANIA', 'RHODE ISLAND', 'SOUTH CAROLINA', 'VERMONT', 'VIRGINIA', 'WEST VIRGINIA', 'ONTARIO', 'QUEBEC', 'ON', 'QC'],
+            'CST (Central Standard Time)' => ['AL', 'AR', 'IL', 'IA', 'KS', 'LA', 'MN', 'MS', 'MO', 'NE', 'ND', 'OK', 'SD', 'TN', 'TX', 'WI',
+                'ALABAMA', 'ARKANSAS', 'ILLINOIS', 'IOWA', 'KANSAS', 'LOUISIANA', 'MINNESOTA', 'MISSISSIPPI', 'MISSOURI', 'NEBRASKA', 'NORTH DAKOTA', 'OKLAHOMA', 'SOUTH DAKOTA', 'TENNESSEE', 'TEXAS', 'WISCONSIN', 'MANITOBA', 'MB'],
+            'MT (Mountain Time)' => ['AZ', 'CO', 'ID', 'MT', 'NM', 'UT', 'WY', 'ARIZONA', 'COLORADO', 'IDAHO', 'MONTANA', 'NEW MEXICO', 'UTAH', 'WYOMING', 'ALBERTA', 'AB'],
+            'PST (Pacific Standard Time)' => ['CA', 'NV', 'OR', 'WA', 'AK', 'HI', 'CALIFORNIA', 'NEVADA', 'OREGON', 'WASHINGTON', 'ALASKA', 'HAWAII', 'BRITISH COLUMBIA', 'BC'],
+        ];
+
+        foreach ($zones as $label => $states) {
+            if (in_array($state, $states, true)) {
+                return $label;
+            }
+        }
+
+        return null;
     }
 
     protected function actAsAi(): User
