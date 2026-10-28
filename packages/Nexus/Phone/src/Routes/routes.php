@@ -12,6 +12,7 @@ use Nexus\Phone\Http\Middleware\VerifyPhoneSignature;
  */
 Route::group(['middleware' => ['web', 'admin_locale', 'user'], 'prefix' => config('app.admin_path')], function () {
     Route::get('leads/phone/sso', [SsoController::class, 'redirect'])->name('admin.leads.phone.sso');
+    Route::get('leads/phone/ai-recording/{callId}', [AiCallerController::class, 'recording'])->name('admin.leads.phone.ai-recording');
 });
 
 /**
@@ -24,7 +25,7 @@ Route::middleware([VerifyPhoneSignature::class, 'throttle:120,1'])->prefix('nexu
     Route::post('calls', [HookController::class, 'calls']);
     Route::post('texts', [HookController::class, 'texts']);
 
-    // The AI caller (aicaller.apps.12nexusbpo.com).
+    // The phone's AI follow-up caller.
     Route::get('ai/queue', [AiCallerController::class, 'queue']);
     Route::get('ai/slots', [AiCallerController::class, 'slots']);
     Route::post('ai/book', [AiCallerController::class, 'book']);

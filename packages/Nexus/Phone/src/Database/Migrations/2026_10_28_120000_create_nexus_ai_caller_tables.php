@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
- * The AI caller (aicaller.apps.12nexusbpo.com) follows up New Leads by phone:
+ * The web phone's AI follow-up caller phones quiet New Leads:
  * - nexus_ai_calls: one row per call it made, with the outcome (disposition),
- *   so attempts can be counted and spaced out;
+ *   the full transcript and the CRM's copy of the recording, so attempts can be
+ *   counted and spaced out and nothing said on a call is lost;
  * - nexus_ai_dnc: numbers that asked not to be called again, never dialled by
  *   the AI caller whatever lead they turn up on;
  * - the "AI Caller" user (inactive: it cannot sign in) that its notes, call
@@ -29,6 +30,9 @@ return new class extends Migration
             $table->boolean('contacted')->default(false);
             $table->unsignedInteger('duration')->default(0);
             $table->text('summary')->nullable();
+            $table->longText('transcript')->nullable();
+            $table->string('recording_path')->nullable();
+            $table->unsignedInteger('transcript_activity_id')->nullable();
             $table->string('action', 32)->nullable();
             $table->timestamp('called_at')->nullable();
             $table->timestamps();

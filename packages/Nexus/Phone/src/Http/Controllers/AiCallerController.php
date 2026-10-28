@@ -5,12 +5,14 @@ namespace Nexus\Phone\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Nexus\Phone\Services\AiCaller;
 
 /**
- * Endpoints for the AI caller (aicaller.apps.12nexusbpo.com), signed with the
- * same shared secret as the web phone (VerifyPhoneSignature).
+ * Endpoints for the web phone's AI follow-up caller, signed with the phone's
+ * shared secret (VerifyPhoneSignature).
  */
 class AiCallerController extends Controller
 {
@@ -75,5 +77,18 @@ class AiCallerController extends Controller
         ]);
 
         return new JsonResponse($this->ai->result($data));
+    }
+
+    /**
+     * The CRM's copy of an AI call's recording ("Play recording" on the lead).
+     * Signed-in users only (web + user middleware); call ids are random UUIDs.
+     */
+    public function recording(string $callId)
+    {
+        $path = DB::table('nexus_ai_calls')->where('call_id', $callId)->value('recording_path');
+
+        abort_if(! $path || ! Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path, 'ai-call-'.$callId.'.wav', ['Content-Type' => 'audio/wav']);
     }
 }

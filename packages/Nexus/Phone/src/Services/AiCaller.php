@@ -4,7 +4,9 @@ namespace Nexus\Phone\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Nexus\Funnel\Services\Funnel;
 use Nexus\SalesForm\Listeners\LeadCreated;
@@ -12,6 +14,7 @@ use Nexus\SalesForm\Services\CalendarFeed;
 use Nexus\SalesForm\Services\LeadBuilder;
 use Nexus\SalesForm\Services\LeadFields;
 use Nexus\SalesForm\Services\MeetingSlots;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
@@ -47,6 +50,7 @@ class AiCaller
         protected LeadFields $fields,
         protected MeetingSlots $slots,
         protected LeadRepository $leads,
+        protected ActivityRepository $activities,
     ) {}
 
     /**
@@ -280,8 +284,14 @@ class AiCaller
 
         $result = $meta['label'].($meta['contacted'] ? '' : " (AI {$attempt}/{$cfg['max_attempts']})");
 
-        $notes = trim("AI caller outcome: {$meta['label']}.\n".($summary !== '' ? "Summary: {$summary}\n" : '')
-            .($transcript !== '' ? "\nTranscript:\n".$transcript : ''));
+        // The recording is copied into the CRM, so "Play recording" works for
+        // everyone who can see the lead (the phone only plays AI calls to admins).
+        $existing = DB::table('nexus_ai_calls')->where('call_id', $call['call_id'])->first();
+        $recordingPath = $existing->recording_path ?? $this->copyRecording($call['call_id'], $call['recording_url'] ?? null);
+        $recordingUrl = $recordingPath ? route('admin.leads.phone.ai-recording', $call['call_id']) : ($call['recording_url'] ?? null);
+
+        $notes = trim("AI caller outcome: {$meta['label']}.".($summary !== '' ? "\nSummary: {$summary}" : '')
+            .($transcript !== '' ? "\nThe full conversation is in the \"AI call transcript\" note." : ''));
 
         $this->callLog->record([
             'call_id'        => $call['call_id'],
@@ -294,15 +304,21 @@ class AiCaller
             'user_name'      => $user->name,
             'lead_id'        => $call['lead_id'],
             'notes'          => mb_substr($notes, 0, 5000),
-            'recording_url'  => $call['recording_url'] ?? null,
+            'recording_url'  => $recordingUrl,
             'source'         => 'AI caller',
         ]);
+
+        $transcriptActivityId = $existing->transcript_activity_id ?? null;
+
+        if (! $transcriptActivityId && $transcript !== '' && $lead) {
+            $transcriptActivityId = $this->transcriptNote($lead, $user, $call, $meta['label'], $summary, $transcript, $recordingUrl);
+        }
 
         $action = 'none';
         $open = $lead && ! $lead->closed_at;
 
         try {
-            DB::transaction(function () use (&$action, $open, $lead, $user, $call, $disposition, $meta, $summary, $attempt, $cfg) {
+            DB::transaction(function () use (&$action, $open, $lead, $user, $call, $disposition, $meta, $summary, $transcript, $recordingPath, $transcriptActivityId, $attempt, $cfg) {
                 $why = $summary !== '' ? ' '.$summary : '';
 
                 switch ($disposition) {
@@ -361,6 +377,9 @@ class AiCaller
                     'contacted'   => $meta['contacted'],
                     'duration'    => (int) $call['duration'],
                     'summary'     => $summary,
+                    'transcript'  => $transcript,
+                    'recording_path' => $recordingPath,
+                    'transcript_activity_id' => $transcriptActivityId,
                     'action'      => $action,
                     'called_at'   => Carbon::parse($call['started_at'])->utc()->format('Y-m-d H:i:s'),
                     'created_at'  => now(),
@@ -429,6 +448,72 @@ class AiCaller
         }
 
         return null;
+    }
+
+    /**
+     * Fetch the call's recording from the web phone (signed like Call notes'
+     * downloads) into storage/app/private/ai-calls. Null when there is none or
+     * it cannot be fetched; the call is logged either way.
+     */
+    protected function copyRecording(string $callId, ?string $url): ?string
+    {
+        $base = (string) config('phone.url');
+        $path = ltrim((string) parse_url((string) $url, PHP_URL_PATH), '/');
+
+        if (! $url || $base === '' || ! str_starts_with($url, $base.'/') || ! preg_match('#^recordings/[\w-]+\.wav$#', $path)) {
+            return null;
+        }
+
+        try {
+            $timestamp = (string) time();
+            $response = Http::withHeaders([
+                'X-Nexus-Timestamp' => $timestamp,
+                'X-Nexus-Signature' => hash_hmac('sha256', $timestamp.'.'.$path.'.', (string) config('phone.secret')),
+            ])->timeout(60)->get($base.'/'.$path)->throw();
+
+            $file = 'ai-calls/'.preg_replace('/[^\w-]/', '', $callId).'.wav';
+            Storage::disk('local')->put($file, $response->body());
+
+            return $file;
+        } catch (\Throwable $e) {
+            Log::warning('AI caller: recording not copied', ['call_id' => $callId, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * The whole conversation as a note on the lead, so the team can read
+     * exactly what was said.
+     */
+    protected function transcriptNote($lead, User $user, array $call, string $label, string $summary, string $transcript, ?string $recordingUrl): int
+    {
+        $at = Carbon::parse($call['started_at'])->utc();
+
+        $note = $this->activities->create([
+            'title'   => 'AI call transcript — '.($lead->person?->name ?: $lead->title).' ('.$label.')',
+            'type'    => 'note',
+            'comment' => mb_substr(implode("\n\n", array_filter([
+                sprintf('AI follow-up call to %s, %s, %d min %d s. Outcome: %s.', $call['number'],
+                    $at->copy()->setTimezone(config('app.timezone', 'UTC'))->format('D j M Y, g:i A T'), intdiv((int) $call['duration'], 60), (int) $call['duration'] % 60, $label),
+                $summary !== '' ? 'Summary: '.$summary : null,
+                $recordingUrl ? 'Recording: '.$recordingUrl : null,
+                $transcript,
+            ])), 0, 60000),
+            'user_id' => $user->id,
+            'is_done' => 1,
+        ]);
+
+        DB::table('lead_activities')->insert(['lead_id' => $lead->id, 'activity_id' => $note->id]);
+
+        if ($lead->person_id) {
+            DB::table('person_activities')->insert(['person_id' => $lead->person_id, 'activity_id' => $note->id]);
+        }
+
+        $end = $at->copy()->addSeconds((int) $call['duration'])->format('Y-m-d H:i:s');
+        DB::table('activities')->where('id', $note->id)->update(['created_at' => $end, 'updated_at' => $end]);
+
+        return (int) $note->id;
     }
 
     protected function actAsAi(): User
