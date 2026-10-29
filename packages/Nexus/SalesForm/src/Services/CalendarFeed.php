@@ -215,4 +215,19 @@ class CalendarFeed
 
         return new DateTimeZone(config('app.timezone', 'UTC'));
     }
+
+    /**
+     * The form's timezone labels grouped by country, for the radio lists:
+     * ['United States' => [...], 'Canada' => [...]].
+     */
+    public static function zoneGroups(): array
+    {
+        $groups = [];
+
+        foreach (array_keys(config('sales_form.timezones')) as $label) {
+            $groups[str_starts_with($label, 'Canada') ? 'Canada' : 'United States'][] = $label;
+        }
+
+        return $groups;
+    }
 }

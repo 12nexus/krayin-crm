@@ -97,12 +97,26 @@ return [
      * Form timezone label => IANA zone, used to store the meeting at the right
      * UTC instant. Labels say "Standard Time" but the zones observe DST, which
      * is what the reps actually mean.
+     *
+     * Canada is listed by province because its clocks no longer follow the US:
+     * from November 2026 British Columbia, Alberta and Manitoba stay on summer
+     * time all year, Saskatchewan never changes, and Ontario, Quebec and the
+     * Atlantic provinces still change with the US. The IANA zones carry those
+     * rules, so PHP's timezonedb must be current (infra Dockerfile). Labels
+     * starting "Canada" are shown under their own heading on the forms.
      */
     'timezones' => [
         'EST (Eastern Standard Time)' => 'America/New_York',
         'CST (Central Standard Time)' => 'America/Chicago',
         'MT (Mountain Time)'          => 'America/Denver',
         'PST (Pacific Standard Time)' => 'America/Los_Angeles',
+
+        'Canada – Atlantic (NS, NB, PEI)'  => 'America/Halifax',
+        'Canada – Ontario / Quebec'        => 'America/Toronto',
+        'Canada – Manitoba'                => 'America/Winnipeg',
+        'Canada – Saskatchewan'            => 'America/Regina',
+        'Canada – Alberta'                 => 'America/Edmonton',
+        'Canada – British Columbia'        => 'America/Vancouver',
     ],
 
     /**

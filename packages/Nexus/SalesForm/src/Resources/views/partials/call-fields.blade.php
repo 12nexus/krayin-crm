@@ -5,7 +5,7 @@
 
     Rendered inside a Vue template whose component has `form.call_at`
     ("Y-m-d H:i", the client's local time) and `form.call_timezone`. Pass
-    $callRequired = true where a time must be given. Needs $timezones.
+    $callRequired = true where a time must be given. The zones come from config.
 --}}
 @php($callRequired = $callRequired ?? false)
 
@@ -35,21 +35,25 @@
             @lang('sales_form::app.call.timezone')
         </p>
 
-        <div class="flex flex-col gap-1.5">
-            @foreach ($timezones as $timezone)
-                <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
-                    <input
-                        type="radio"
-                        name="call_timezone"
-                        value="{{ $timezone }}"
-                        v-model="form.call_timezone"
-                        :required="{{ $callRequired ? 'true' : 'false' }} || !! form.call_at"
-                        class="accent-[#004EF0]"
-                    >
-                    <span>{{ $timezone }}</span>
-                </label>
-            @endforeach
-        </div>
+        @foreach (\Nexus\SalesForm\Services\CalendarFeed::zoneGroups() as $country => $zones)
+            <p class="mb-1 mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 first:mt-0 dark:text-gray-400">{{ $country }}</p>
+
+            <div class="flex flex-col gap-1.5">
+                @foreach ($zones as $timezone)
+                    <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
+                        <input
+                            type="radio"
+                            name="call_timezone"
+                            value="{{ $timezone }}"
+                            v-model="form.call_timezone"
+                            :required="{{ $callRequired ? 'true' : 'false' }} || !! form.call_at"
+                            class="accent-[#004EF0]"
+                        >
+                        <span>{{ \Illuminate\Support\Str::after($timezone, 'Canada – ') }}</span>
+                    </label>
+                @endforeach
+            </div>
+        @endforeach
 
         @error('call_timezone')
             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
