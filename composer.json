@@ -68,6 +68,7 @@
             "Nexus\\Clients\\": "packages/Nexus/Clients/src",
             "Nexus\\FollowUp\\": "packages/Nexus/FollowUp/src",
             "Nexus\\Phone\\": "packages/Nexus/Phone/src",
+            "Nexus\\Contracts\\": "packages/Nexus/Contracts/src",
             "Webkul\\Activity\\": "packages/Webkul/Activity/src",
             "Webkul\\Admin\\": "packages/Webkul/Admin/src",
             "Webkul\\Attribute\\": "packages/Webkul/Attribute/src",
