@@ -25,11 +25,19 @@ return [
     'new_lead_stage' => 'new',
 
     /**
-     * Every client starts on a retainer of at least this much a month, in the
-     * account currency. It is the default estimated lead value and the floor
-     * the forms accept; a rep raises it to suit the deal.
+     * Estimated monthly lead value, in the account currency. Picking an
+     * engagement type fills in its price, which the rep can then change; with
+     * no type the default applies. Nothing below the minimum is accepted.
      */
-    'minimum_lead_value' => 600,
+    'lead_values' => [
+        'Full-time' => 1200,
+        'Part-time' => 600,
+        'Shared'    => 300,
+    ],
+
+    'default_lead_value' => 600,
+
+    'minimum_lead_value' => 300,
 
     /**
      * Whether the client is after a part-time or a full-time VA. Shown on the

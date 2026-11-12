@@ -263,7 +263,7 @@
                             assistant_type: @json(old('assistant_type')) ?? pick('assistant_type', ''),
                             willingness: parseInt(@json(old('willingness')) ?? pick('willingness', 2)),
                             engagement_type: @json(old('engagement_type')) ?? pick('engagement_type', ''),
-                            lead_value: @json(old('lead_value')) ?? pick('lead_value', @json($minimumValue)),
+                            lead_value: @json(old('lead_value')) ?? pick('lead_value', @json($defaultValue)),
                             meeting_date: @json(old('meeting_date', '')),
                             meeting_time: @json(old('meeting_time', '')),
                             timezone: @json(old('timezone', '')),

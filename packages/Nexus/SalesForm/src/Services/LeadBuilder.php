@@ -504,13 +504,17 @@ class LeadBuilder
     }
 
     /**
-     * The retainer floor applies whatever was typed, and is the default.
+     * What was typed, else the engagement type's price; never below the floor.
      */
     protected function leadValue(array $input): float
     {
         $minimum = (float) config('sales_form.minimum_lead_value');
 
         $value = (float) ($input['lead_value'] ?? 0);
+
+        if ($value <= 0) {
+            $value = (float) (config('sales_form.lead_values')[$input['engagement_type'] ?? ''] ?? config('sales_form.default_lead_value'));
+        }
 
         return max($minimum, $value);
     }

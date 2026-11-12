@@ -1,9 +1,10 @@
 {{--
-    Part-time / full-time and the estimated monthly value. The value defaults to
-    the retainer floor and cannot go below it; the rep raises it to suit the deal.
+    Engagement type and the estimated monthly value. Picking a type fills in its
+    price (sales_form.lead_values), which the rep can change; nothing below the
+    minimum is accepted.
 
     Rendered inside a Vue template whose component has `form.engagement_type` and
-    `form.lead_value`. Needs $engagementTypes and $minimumValue.
+    `form.lead_value`. Needs $engagementTypes, $leadValues and $minimumValue.
 --}}
 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
     <div>
@@ -14,7 +15,7 @@
         <div class="flex flex-wrap gap-4">
             @foreach ($engagementTypes as $engagementType)
                 <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
-                    <input type="radio" name="engagement_type" value="{{ $engagementType }}" v-model="form.engagement_type" class="accent-[#004EF0]">
+                    <input type="radio" name="engagement_type" value="{{ $engagementType }}" v-model="form.engagement_type" @change="form.lead_value = {{ (float) ($leadValues[$engagementType] ?? $defaultValue) }}" class="accent-[#004EF0]">
                     <span>{{ $engagementType }}</span>
                 </label>
             @endforeach
@@ -40,7 +41,7 @@
         </div>
 
         <p class="mt-1 text-xs text-gray-400">
-            @lang('sales_form::app.index.lead.lead-value-help', ['min' => number_format($minimumValue)])
+            @lang('sales_form::app.index.lead.lead-value-help', ['prices' => collect($leadValues)->map(fn ($price, $type) => $type.' $'.number_format($price))->implode(', '), 'min' => number_format($minimumValue)])
         </p>
 
         @error('lead_value')

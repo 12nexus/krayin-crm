@@ -224,7 +224,7 @@
                             city: @json(old('city', '')),
                             state: @json(old('state', '')),
                             engagement_type: @json(old('engagement_type', '')),
-                            lead_value: @json(old('lead_value', $minimumValue)),
+                            lead_value: @json(old('lead_value', $defaultValue)),
                             call_at: @json(old('call_at', '')),
                             call_timezone: @json(old('call_timezone', '')),
                         },

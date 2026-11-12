@@ -81,7 +81,7 @@ return [
             'email'            => 'Email Address',
             'engagement'       => 'Part-time / Full-time',
             'lead-value'       => 'Estimated monthly value (USD)',
-            'lead-value-help'  => 'Defaults to the $:min monthly retainer, which is also the minimum. Raise it to suit the deal.',
+            'lead-value-help'  => 'Filled in from the engagement type (:prices); change it to suit the deal. Minimum $:min.',
         ],
 
         'meeting' => [

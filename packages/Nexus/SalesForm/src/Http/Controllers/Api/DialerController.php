@@ -235,6 +235,7 @@ class DialerController extends Controller
                 'assistant_types'  => ['Remote VA', 'In-house Assistant', 'Other'],
                 'willingness'      => config('sales_form.willingness'),
                 'minimum_value'    => (float) config('sales_form.minimum_lead_value'),
+                'lead_values'      => config('sales_form.lead_values'),
                 'meeting_minutes'  => (int) config('sales_form.notify.meeting_minutes'),
                 'call_minutes'     => (int) config('sales_form.call_minutes'),
                 'sales_users'      => $canReassign

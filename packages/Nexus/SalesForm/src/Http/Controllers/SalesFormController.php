@@ -165,6 +165,8 @@ class SalesFormController extends Controller
             'timezones'       => array_keys(config('sales_form.timezones')),
             'engagementTypes' => config('sales_form.engagement_types'),
             'minimumValue'    => (float) config('sales_form.minimum_lead_value'),
+            'leadValues'      => config('sales_form.lead_values'),
+            'defaultValue'    => (float) config('sales_form.default_lead_value'),
             'agentsOnFile'    => $this->lookup->firmCounts(),
             'firms'           => AgentLookupService::firmOptions(),
             'lead'            => null,
