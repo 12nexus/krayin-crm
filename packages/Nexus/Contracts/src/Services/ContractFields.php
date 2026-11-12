@@ -41,6 +41,10 @@ class ContractFields
                 'monthly_charge' => ['money', 'Agreement: Charges per month'],
                 'setup_fee'      => ['money', 'Agreement: One-time setup'],
             ],
+            'additions' => [
+                'additional_responsibilities' => ['lines', 'Agreement: extra bullets under Responsibilities, one per line'],
+                'additional_terms'            => ['textarea', 'Agreement: an "Additional Terms" section before the signatures'],
+            ],
         ];
     }
 
@@ -60,6 +64,8 @@ class ContractFields
             'plan'             => ['required', Rule::in(config('contracts.plans'))],
             'monthly_charge'   => ['required', 'numeric', 'min:0', 'max:1000000'],
             'setup_fee'        => ['required', 'numeric', 'min:0', 'max:1000000'],
+            'additional_responsibilities' => ['nullable', 'string', 'max:5000'],
+            'additional_terms'            => ['nullable', 'string', 'max:5000'],
         ];
     }
 
@@ -108,6 +114,8 @@ class ContractFields
             'plan'             => $engagement === 'Part-time' ? 'Part time' : 'Full time',
             'monthly_charge'   => (float) $lead->lead_value > 0 ? (float) $lead->lead_value : $defaults['monthly_charge'],
             'setup_fee'        => $defaults['setup_fee'],
+            'additional_responsibilities' => '',
+            'additional_terms'            => '',
         ];
     }
 
@@ -124,6 +132,7 @@ class ContractFields
             $fields[$key] = match ($key) {
                 'duration', 'resources', 'days_per_week' => (int) $value,
                 'hours_per_day', 'monthly_charge', 'setup_fee' => (float) $value,
+                'additional_responsibilities', 'additional_terms' => trim(str_replace("\r\n", "\n", (string) $value)),
                 default => trim((string) $value),
             };
         }
@@ -167,6 +176,12 @@ class ContractFields
             'plan'            => $fields['plan'],
             'monthly_charge'  => $this->money($fields['monthly_charge']),
             'setup_fee'       => $this->money($fields['setup_fee']),
+            // One bullet per non-empty line, any leading "-", "*" or "•" dropped.
+            'additional_responsibilities' => array_values(array_filter(array_map(
+                fn ($line) => trim(preg_replace('/^\s*[-*•]\s*/u', '', $line)),
+                explode("\n", (string) ($fields['additional_responsibilities'] ?? ''))
+            ), 'strlen')),
+            'additional_terms' => trim((string) ($fields['additional_terms'] ?? '')),
         ];
     }
 

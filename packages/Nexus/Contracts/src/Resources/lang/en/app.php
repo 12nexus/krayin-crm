@@ -29,6 +29,7 @@ return [
         'printed'      => 'As printed',
         'client'       => 'Client',
         'agreement'    => 'Agreement terms',
+        'additions'    => 'Additions for this client (optional)',
         'blank'        => 'Left blank in the document',
     ],
 
@@ -46,6 +47,13 @@ return [
         'plan'             => 'Plan',
         'monthly_charge'   => 'Monthly charge (USD)',
         'setup_fee'        => 'One-time setup fee (USD)',
+        'additional_responsibilities' => 'Additional responsibilities',
+        'additional_terms'            => 'Additional notes / terms',
+    ],
+
+    'placeholders' => [
+        'additional_responsibilities' => "One responsibility per line, e.g.\nManage the client's Zillow and Realtor.com listings.",
+        'additional_terms'            => 'Anything else agreed with this client, printed as its own section at the end of the agreement.',
     ],
 
     'printed' => [

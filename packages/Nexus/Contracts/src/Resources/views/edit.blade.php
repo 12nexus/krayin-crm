@@ -133,7 +133,7 @@
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         @foreach ($sectionFields as $key => [$type, $usedIn])
-                            <div>
+                            <div @class(['md:col-span-2' => in_array($type, ['lines', 'textarea'], true)])>
                                 <label for="{{ $key }}" class="{{ $label }} {{ in_array($key, $requiredFields, true) ? $required : '' }}">
                                     @lang('contracts::app.fields.'.$key)
                                 </label>
@@ -174,6 +174,18 @@
 
                                     @case('money')
                                         <input type="number" id="{{ $key }}" name="{{ $key }}" value="{{ $value($key) }}" min="0" step="0.01" required class="{{ $input }}">
+                                        @break
+
+                                    @case('lines')
+                                    @case('textarea')
+                                        <textarea
+                                            id="{{ $key }}"
+                                            name="{{ $key }}"
+                                            rows="5"
+                                            maxlength="5000"
+                                            placeholder="{{ __('contracts::app.placeholders.'.$key) }}"
+                                            class="{{ $input }}"
+                                        >{{ $value($key) }}</textarea>
                                         @break
 
                                     @default

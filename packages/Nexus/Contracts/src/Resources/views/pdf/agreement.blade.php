@@ -151,6 +151,11 @@
         Company will be flexible to the needs of Client and accommodate those.
     </p>
 
+    @if ($v['additional_terms'] !== '')
+        <h2>13 &ndash; Additional Terms:</h2>
+        <p>{!! nl2br(e($v['additional_terms'])) !!}</p>
+    @endif
+
     <table class="signatures">
         <tr><td><strong>On behalf of the Company:</strong></td><td><strong>On behalf of Client:</strong></td></tr>
         <tr><td class="gap">Signature: <span class="line">&nbsp;</span></td><td class="gap">Signature: <span class="line">&nbsp;</span></td></tr>

@@ -59,6 +59,14 @@
             'Perform any other reasonable duties or responsibilities assigned by the client that are relevant to the client’s industry, business operations, and the Virtual Assistant’s role, skills, and capabilities.',
         ],
     ];
+
+    // Added for this client on the contract form, ahead of the catch-all last heading.
+    if ($extra = $v['additional_responsibilities'] ?? []) {
+        $last = array_key_last($responsibilities);
+        $responsibilities = array_slice($responsibilities, 0, -1, true)
+            + ['Additional Responsibilities' => $extra]
+            + [$last => $responsibilities[$last]];
+    }
 @endphp
 
 @foreach ($responsibilities as $heading => $items)
