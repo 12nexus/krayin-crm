@@ -35,7 +35,7 @@ return [
      * Whether the client is after a part-time or a full-time VA. Shown on the
      * kanban card in place of the price.
      */
-    'engagement_types' => ['Part-time', 'Full-time'],
+    'engagement_types' => ['Part-time', 'Full-time', 'Shared'],
 
     /**
      * Length of the Call activity booked when a rep agrees a time to call a New
