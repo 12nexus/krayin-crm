@@ -4,6 +4,7 @@ namespace Webkul\Admin\Helpers\Reporting;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Nexus\Clients\Models\Client;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\StageRepository;
@@ -287,19 +288,18 @@ class Lead extends AbstractReporting
     }
 
     /**
-     * Retrieves average lost lead value
+     * Lost revenue: the monthly retainer of clients who paused or discontinued
+     * service in the period (not lost leads).
      *
      * @param  Carbon  $startDate
      * @param  Carbon  $endDate
-     * @return array
      */
     public function getTotalLostLeadValue($startDate, $endDate): ?float
     {
-        return $this->leadRepository
-            ->resetModel()
-            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('lead_value');
+        return (float) DB::table('nexus_clients')
+            ->whereIn('status', Client::LOST_STATUSES)
+            ->whereBetween('status_changed_at', [$startDate, $endDate])
+            ->sum('monthly_retainer');
     }
 
     /**

@@ -30,9 +30,24 @@ class Client extends Model
     ];
 
     protected $casts = [
-        'onboarded_on'     => 'date',
-        'monthly_retainer' => 'decimal:2',
+        'onboarded_on'      => 'date',
+        'monthly_retainer'  => 'decimal:2',
+        'status_changed_at' => 'datetime',
     ];
+
+    /**
+     * Statuses whose retainer counts as lost revenue on the dashboard.
+     */
+    public const LOST_STATUSES = ['paused', 'ended'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Client $client) {
+            if ($client->isDirty('status')) {
+                $client->status_changed_at = now();
+            }
+        });
+    }
 
     public function lead(): BelongsTo
     {

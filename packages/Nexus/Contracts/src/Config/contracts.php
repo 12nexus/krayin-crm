@@ -31,7 +31,7 @@ return [
         'Full-time' => 8,
     ],
 
-    'plans' => ['Part time', 'Full time'],
+    'plans' => ['Part time', 'Full time', 'Shared'],
 
     /**
      * Agreement duration choices, in months.
