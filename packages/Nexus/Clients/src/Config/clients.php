@@ -3,7 +3,7 @@
 return [
     'statuses' => ['active' => 'Active', 'paused' => 'Paused', 'ended' => 'Ended'],
 
-    'engagement_types' => ['Part-time', 'Full-time'],
+    'engagement_types' => ['Part-time', 'Full-time', 'Shared'],
 
     'document_categories' => [
         'contract' => 'Contract with 12 Nexus',

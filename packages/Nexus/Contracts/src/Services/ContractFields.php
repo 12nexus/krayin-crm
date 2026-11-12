@@ -111,7 +111,7 @@ class ContractFields
             'resources'        => $defaults['resources'],
             'hours_per_day'    => config('contracts.hours_per_day')[$engagement] ?? 4,
             'days_per_week'    => $defaults['days_per_week'],
-            'plan'             => $engagement === 'Part-time' ? 'Part time' : 'Full time',
+            'plan'             => match ($engagement) { 'Part-time' => 'Part time', 'Shared' => 'Shared', default => 'Full time' },
             'monthly_charge'   => (float) $lead->lead_value > 0 ? (float) $lead->lead_value : $defaults['monthly_charge'],
             'setup_fee'        => $defaults['setup_fee'],
             'additional_responsibilities' => '',
