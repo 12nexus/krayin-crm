@@ -52,18 +52,14 @@
                                 @lang('sales_form::app.index.meeting.timezone')
                             </p>
 
-                            @foreach (\Nexus\SalesForm\Services\CalendarFeed::zoneGroups() as $country => $zones)
-                                <p class="mb-1 mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $country }}</p>
-
-                                <div class="flex flex-wrap gap-x-4 gap-y-1.5">
-                                    @foreach ($zones as $timezone)
-                                        <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
-                                            <input type="radio" name="timezone" value="{{ $timezone }}" v-model="form.timezone" required class="accent-[#004EF0]">
-                                            <span>{{ \Illuminate\Support\Str::after($timezone, 'Canada – ') }}</span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            @endforeach
+                            <div class="flex flex-wrap gap-4">
+                                @foreach (\Nexus\SalesForm\Services\CalendarFeed::formZones() as $timezone)
+                                    <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
+                                        <input type="radio" name="timezone" value="{{ $timezone }}" v-model="form.timezone" required class="accent-[#004EF0]">
+                                        <span>{{ $timezone }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
 
                         <!-- What is already on the shared sales calendar that day (partials/day-plan) -->

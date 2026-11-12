@@ -217,17 +217,14 @@ class CalendarFeed
     }
 
     /**
-     * The form's timezone labels grouped by country, for the radio lists:
-     * ['United States' => [...], 'Canada' => [...]].
+     * The timezone labels offered on the forms: the four US zones. Canadian
+     * labels stay in config so meetings already stored with them still resolve.
      */
-    public static function zoneGroups(): array
+    public static function formZones(): array
     {
-        $groups = [];
-
-        foreach (array_keys(config('sales_form.timezones')) as $label) {
-            $groups[str_starts_with($label, 'Canada') ? 'Canada' : 'United States'][] = $label;
-        }
-
-        return $groups;
+        return array_values(array_filter(
+            array_keys(config('sales_form.timezones')),
+            fn ($label) => ! str_starts_with($label, 'Canada')
+        ));
     }
 }
