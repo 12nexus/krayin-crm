@@ -32,6 +32,12 @@
                         {{ $account->email }}
                         <span class="text-gray-400">· @lang('sales_form::app.google-calendar.connected-since', ['date' => \Carbon\Carbon::parse($account->created_at)->format('j M Y')])</span>
                     </p>
+
+                    @if ($account->expired_at)
+                        <p class="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+                            @lang('sales_form::app.google-calendar.expired', ['date' => \Carbon\Carbon::parse($account->expired_at)->format('j M Y')])
+                        </p>
+                    @endif
                 @else
                     <p class="text-gray-600 dark:text-gray-300">@lang('sales_form::app.google-calendar.not-connected')</p>
                 @endif

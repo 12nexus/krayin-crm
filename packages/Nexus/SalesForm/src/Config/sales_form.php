@@ -127,6 +127,21 @@ return [
     'google' => [
         'client_id'     => env('GOOGLE_CALENDAR_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CALENDAR_CLIENT_SECRET'),
+
+        /**
+         * nexus:google-calendar-check (daily) emails these addresses when the
+         * connected account's sign-in has expired or no account is connected,
+         * once a day until it is reconnected.
+         */
+        'reauth_recipients' => array_values(array_filter(array_map('trim', explode(',', (string) env('GOOGLE_CALENDAR_REAUTH_RECIPIENTS', 'shehzer@12nexusbpo.com'))))),
+
+        /**
+         * Also ask for the account to be reconnected this many days after it
+         * was connected, ahead of a known lapse (an OAuth app left in
+         * "Testing" gets sign-ins that last 7 days). 0, the default, only
+         * emails once the sign-in has actually stopped working.
+         */
+        'reauth_after_days' => (int) env('GOOGLE_CALENDAR_REAUTH_AFTER_DAYS', 0),
     ],
 
     /**

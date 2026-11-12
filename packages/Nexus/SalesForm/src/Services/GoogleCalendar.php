@@ -52,9 +52,46 @@ class GoogleCalendar
         return DB::table('nexus_google_calendar_accounts')->latest('id')->first();
     }
 
+    /**
+     * Connected and still signed in: an account whose sign-in Google no longer
+     * accepts is left alone until it is reconnected.
+     */
     public function connected(): bool
     {
-        return $this->configured() && $this->account() !== null;
+        $account = $this->account();
+
+        return $this->configured() && $account !== null && ! $account->expired_at;
+    }
+
+    /**
+     * Whether the connected account still works: "ok", "expired" (Google no
+     * longer accepts its sign-in; it has to be connected again) or "missing"
+     * (no account connected). Gets a fresh access token to find out; any
+     * other failure (Google or the network down) is thrown.
+     */
+    public function status(): string
+    {
+        $account = $this->account();
+
+        if (! $account) {
+            return 'missing';
+        }
+
+        if ($account->expired_at) {
+            return 'expired';
+        }
+
+        try {
+            $this->refreshAccessToken($account);
+        } catch (RuntimeException $e) {
+            if ($this->account()?->expired_at) {
+                return 'expired';
+            }
+
+            throw $e;
+        }
+
+        return 'ok';
     }
 
     public function redirectUri(): string
@@ -313,12 +350,35 @@ class GoogleCalendar
             return Crypt::decryptString($account->access_token);
         }
 
-        $tokens = Http::asForm()->timeout(15)->post(self::TOKEN_URL, [
+        return $this->refreshAccessToken($account);
+    }
+
+    /**
+     * A new access token from the account's refresh token. When Google answers
+     * invalid_grant (the sign-in expired or was revoked) the account is marked
+     * expired, so nothing calls Google with it again until it is reconnected.
+     */
+    protected function refreshAccessToken(object $account): string
+    {
+        $response = Http::asForm()->timeout(15)->post(self::TOKEN_URL, [
             'client_id'     => config('sales_form.google.client_id'),
             'client_secret' => config('sales_form.google.client_secret'),
             'refresh_token' => Crypt::decryptString($account->refresh_token),
             'grant_type'    => 'refresh_token',
-        ])->throw()->json();
+        ]);
+
+        if ($response->json('error') === 'invalid_grant') {
+            DB::table('nexus_google_calendar_accounts')->where('id', $account->id)->update([
+                'expired_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::warning('Google Calendar sign-in expired', ['email' => $account->email]);
+
+            throw new RuntimeException("The Google Calendar sign-in for {$account->email} has expired. Reconnect it under Settings → Google Calendar.");
+        }
+
+        $tokens = $response->throw()->json();
 
         DB::table('nexus_google_calendar_accounts')->where('id', $account->id)->update([
             'access_token'            => Crypt::encryptString($tokens['access_token']),

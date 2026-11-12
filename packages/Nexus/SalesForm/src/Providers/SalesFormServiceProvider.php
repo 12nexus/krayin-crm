@@ -5,6 +5,7 @@ namespace Nexus\SalesForm\Providers;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Nexus\SalesForm\Console\Commands\CheckGoogleCalendar;
 use Nexus\SalesForm\Console\Commands\ImportViciDialAgents;
 use Nexus\SalesForm\Console\Commands\SyncMeetingNotes;
 use Nexus\SalesForm\Listeners\LeadCreated;
@@ -56,6 +57,7 @@ class SalesFormServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                CheckGoogleCalendar::class,
                 ImportViciDialAgents::class,
                 SyncMeetingNotes::class,
             ]);
