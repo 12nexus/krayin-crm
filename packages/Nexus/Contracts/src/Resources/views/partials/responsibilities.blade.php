@@ -28,7 +28,7 @@
             'Manage website content, property listings, and relevant updates to ensure accuracy and consistency.',
         ],
         'Newsletter and Market Research' => [
-            'Create and distribute monthly newsletters featuring real estate information, Tri-Town Area news, local developments, and real estate market updates.',
+            'Create and distribute monthly newsletters featuring real estate information, Local area news, local developments, and real estate market updates.',
             'Research relevant local market trends, property information, and community news to support client communications and marketing efforts.',
         ],
         'Digital Marketing and Social Media Management' => [
